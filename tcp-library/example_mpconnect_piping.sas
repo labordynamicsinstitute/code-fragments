@@ -3,13 +3,14 @@
 /* $URL$ */
 /* $Author$ */
 /* from
-http://support.sas.com/onlinedoc/913/getDoc/en/connref.hlp/a002213148.htm 
+http://support.sas.com/onlinedoc/913/getDoc/en/connref.hlp/a002213148.htm
+modified for Linux. 
 */
 /* -----------  DATA Step - Process P1  ----- */
 signon p1 sascmd='!sascmd';
 rsubmit p1  wait=no;
 
-libname outLib sasesock ":pipe1"; 
+libname outLib sasesock ":2345"; 
 
 /* create data set - and write to pipe */
 data outLib.Intermediate;
@@ -26,8 +27,8 @@ rdisplay p1;
 signon p2 sascmd='!sascmd';
 rsubmit p2  wait=no;
 
-libname inLib sasesock ":pipe1";
-libname outLib "d:\temp"; 
+libname inLib sasesock ":2345";
+libname outLib "."; 
 
 data outLib.Final;
 set inLib.Intermediate; 
@@ -40,5 +41,3 @@ run;
 endrsubmit;
 rdisplay p2;
 /* -------------------------------------------- */
-
-space
