@@ -20,7 +20,6 @@ data outLib.Intermediate;
    end;
 run;
 endrsubmit;
-rdisplay p1;
 
 /* -----------  DATA Step - Process P2  ----- */
 
@@ -39,5 +38,8 @@ set inLib.Intermediate;
    end;
 run;
 endrsubmit;
-rdisplay p2;
+waitfor p1 p2;
+
+rget p1;
+rget  p2;
 /* -------------------------------------------- */
