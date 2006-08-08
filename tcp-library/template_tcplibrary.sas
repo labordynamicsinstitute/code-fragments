@@ -18,6 +18,10 @@ options mprint symbolgen ;
 libname OUTPUTS '.';
 
 /*------------------------------------------------------------
+  Size of the test run in this program
+------------------------------------------------------------*/
+%let samplesize=1000000;
+/*------------------------------------------------------------
   MP/Connect config 
 ------------------------------------------------------------*/
 options sascmd='sas -work /tmp' autosignon;
@@ -32,10 +36,10 @@ options sascmd='sas -work /tmp' autosignon;
   All communication ports will be above this
   port, hard-coded as numbers.
 ------------------------------------------------------------*/
-%let tcpinbase=2000;
-%let maxunits=2;
+%let tcpinbase=20000;
+%let maxunits=100;
 %let tcpoutbase=%eval(&tcpinbase.+&maxunits.);
-%let tcpwait=30;  /* in seconds */
+%let tcpwait=300;  /* in seconds */
 
 /*------------------------------------------------------------
   the actual execution unit 
@@ -116,7 +120,7 @@ data OUTPUTS.master
   TO_N&i..one
 %end;
 	;
-        do i =1 to 10000000;
+        do i =1 to &samplesize.;
         j=ranuni(today());
 	segment=mod(i,&maxunits.)+1;
 	if segment = 1 then output TO_N1.one;
