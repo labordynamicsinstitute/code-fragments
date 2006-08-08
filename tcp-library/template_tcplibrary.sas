@@ -61,20 +61,16 @@ options sascmd='sas -work /tmp' autosignon;
 	    libname TO_N sasesock ":%eval(&tcpinbase.+&i.)"  TIMEOUT=&tcpwait.;
 	    libname FROM_N sasesock ":%eval(&tcpoutbase.+&i.)"  TIMEOUT=&tcpwait.;
 
-        %end; /* end of mpconnect config */
+	    proc sort data=TO_N.one out=two;
+	    by j;
+	    run;
 
+	    data FROM_N.two;
+	         set two;
+		 length handler 3;
+		 handler=&i.;
+	    run;
 
-proc sort data=TO_N.one out=two;
-by j;
-run;
-
-data FROM_N.two;
-     set two;
-     length handler 3;
-     handler=&i.;
-run;
-
-        %if ( &mpconnect = yes ) %then %do;
             ENDRSUBMIT;
         %end; /* end of mpconnect config */
 %end; /* end i loop */
@@ -84,8 +80,8 @@ run;
 
 */
 
+     %do i=1 %to &maxunits.;
         %if ( &mpconnect = yes ) %then %do;
-	  %do i=1 %to &maxunits.;
             /*---------- SIGNON ----------*/
             SIGNON c&i. sascmd="sas -altlog local_c_&i..log -work /tmp";
             %syslput thisdir=&thisdir.;
@@ -93,31 +89,41 @@ run;
 	    %syslput tcpoutbase=&tcpoutbase.;
 	    %syslput tcpwait=&tcpwait.;
             %syslput i=&i.;
-            RSUBMIT c&i. WAIT=NO inheritlib=(OUTPUTS=OUTPUTS);
+            RSUBMIT c&i. WAIT=NO inheritlib=(OUTPUTS=OUTPUTS WORK=LWORK);
 	    
 	    libname FROM_N sasesock ":%eval(&tcpoutbase.+&i.)" TIMEOUT=&tcpwait.;
-	    %end;
-
-	    data OUTPUTS.final_cluster_&i.;
+	    data LWORK.final_cluster_&i.;
 	       set FROM_N.two;
 	       run;
 
             ENDRSUBMIT;
         %end; /* end of mpconnect config */
+      %end; /* end of i-maxunits */
+
 
 
 /*============================================================
    the listening jobs have been spawned off.
-   Now we should feed them.
+   Now we should feed them - PUSH model.
 */
 
-%let i=1;
-libname TO_N sasesock ":%eval(&tcpinbase.+&i.)";
-data TO_N.one;
+%do i=1 %to &maxunits.;
+  libname TO_N&i. sasesock ":%eval(&tcpinbase.+&i.)";
+%end;
+
+data OUTPUTS.master
+%do i=1 %to &maxunits.;
+  TO_N&i..one
+%end;
+	;
         do i =1 to 1000;
         j=ranuni(today());
 	segment=mod(i,&maxunits.)+1;
-        output;
+	if segment = 1 then output TO_N1.one;
+%do i=2 %to &maxunits.;
+  else if segment = &i. then output TO_N&i..one
+%end;
+	output OUTPUTS.master;
         end;
 run;
 
@@ -152,6 +158,22 @@ run;
            SIGNOFF c&i;
 %end;
         %end; /* end of mpconnect config */
+
+/*------------------------------------------------------------
+  Combine all the node files back together.
+------------------------------------------------------------*/
+
+	    data OUTPUTS.final_cluster_all;
+		 set
+%do i=1 %to &maxunits.;
+	           WORK.final_cluster_&i.
+%end;
+		;
+	       run;
+
+	    proc freq data=OUTPUTS.final_cluster_all;
+	    table segment handler segment*handler;
+	    run;
 
                
 %mend;
