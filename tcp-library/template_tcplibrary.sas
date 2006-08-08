@@ -33,7 +33,7 @@ options sascmd='sas -work /tmp' autosignon;
   port, hard-coded as numbers.
 ------------------------------------------------------------*/
 %let tcpinbase=2000;
-%let maxunits=1;
+%let maxunits=2;
 %let tcpoutbase=%eval(&tcpinbase.+&maxunits.);
 %let tcpwait=30;  /* in seconds */
 
@@ -121,7 +121,7 @@ data OUTPUTS.master
 	segment=mod(i,&maxunits.)+1;
 	if segment = 1 then output TO_N1.one;
 %do i=2 %to &maxunits.;
-  else if segment = &i. then output TO_N&i..one
+  else if segment = &i. then output TO_N&i..one ;
 %end;
 	output OUTPUTS.master;
         end;
