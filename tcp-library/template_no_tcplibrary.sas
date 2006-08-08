@@ -34,6 +34,11 @@ options sascmd='sas -work /tmp' autosignon;
 
 %macro runit;
 
+/*------------------------------------------------------------
+  This is the master feeder. It gets started last in the 
+  MP/Connect version
+------------------------------------------------------------*/
+
 data OUTPUTS.master
 	;
         do i =1 to &samplesize.;
@@ -42,6 +47,11 @@ data OUTPUTS.master
 	output OUTPUTS.master;
         end;
 run;
+
+/*------------------------------------------------------------
+   NODE ROUTINE
+   This is what the nodes do.
+------------------------------------------------------------*/
 
 	    proc sort data=OUTPUTS.master out=two;
 	    by j;
@@ -53,6 +63,10 @@ run;
 		 handler=&i.;
 	    run;
 
+/*------------------------------------------------------------
+  Obviously, no need to collect the data. This just provides
+  the same statistics as the original data.
+------------------------------------------------------------*/   
 
 	    proc freq data=OUTPUTS.final_cluster_all;
 	    table segment handler segment*handler;
