@@ -116,7 +116,7 @@ data OUTPUTS.master
   TO_N&i..one
 %end;
 	;
-        do i =1 to 1000;
+        do i =1 to 10000000;
         j=ranuni(today());
 	segment=mod(i,&maxunits.)+1;
 	if segment = 1 then output TO_N1.one;
