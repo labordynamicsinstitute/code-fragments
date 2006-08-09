@@ -37,7 +37,7 @@ options sascmd='sas -work /tmp' autosignon;
   port, hard-coded as numbers.
 ------------------------------------------------------------*/
 %let tcpinbase=20000;
-%let maxunits=100;
+%let maxunits=10;
 %let tcpoutbase=%eval(&tcpinbase.+&maxunits.);
 %let tcpwait=300;  /* in seconds */
 
@@ -65,11 +65,11 @@ options sascmd='sas -work /tmp' autosignon;
 	    libname TO_N sasesock ":%eval(&tcpinbase.+&i.)"  TIMEOUT=&tcpwait.;
 	    libname FROM_N sasesock ":%eval(&tcpoutbase.+&i.)"  TIMEOUT=&tcpwait.;
 
-	    proc sort data=TO_N.one out=two;
+	    proc sort data=TO_N.one_&i. out=two;
 	    by j;
 	    run;
 
-	    data FROM_N.two;
+	    data FROM_N.two_&i.;
 	         set two;
 		 length handler 3;
 		 handler=&i.;
@@ -97,7 +97,7 @@ options sascmd='sas -work /tmp' autosignon;
 	    
 	    libname FROM_N sasesock ":%eval(&tcpoutbase.+&i.)" TIMEOUT=&tcpwait.;
 	    data LWORK.final_cluster_&i.;
-	       set FROM_N.two;
+	       set FROM_N.two_&i.;
 	       run;
 
             ENDRSUBMIT;
@@ -117,15 +117,15 @@ options sascmd='sas -work /tmp' autosignon;
 
 data OUTPUTS.master
 %do i=1 %to &maxunits.;
-  TO_N&i..one
+  TO_N&i..one_&i.
 %end;
 	;
         do i =1 to &samplesize.;
         j=ranuni(today());
 	segment=mod(i,&maxunits.)+1;
-	if segment = 1 then output TO_N1.one;
+	if segment = 1 then output TO_N1.one_1;
 %do i=2 %to &maxunits.;
-  else if segment = &i. then output TO_N&i..one ;
+  else if segment = &i. then output TO_N&i..one_&i. ;
 %end;
 	output OUTPUTS.master;
         end;
