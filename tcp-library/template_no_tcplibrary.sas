@@ -11,6 +11,8 @@
 
 options mprint symbolgen ;
 libname OUTPUTS '.';
+%include "config_grid.sas";
+/* include "config_user.sas"; not needed */ 
 
 /*------------------------------------------------------------
   Size of the test run in this program
@@ -25,16 +27,6 @@ options sascmd='sas -work /tmp' autosignon;
  this should not be set to no 
 ------------------------------------------------------------*/
 %let mpconnect=yes;
-
-/*------------------------------------------------------------
-  check that this works on your system.
-  All communication ports will be above this
-  port, hard-coded as numbers.
-------------------------------------------------------------*/
-%let tcpinbase=20000;
-%let maxunits=10;
-%let tcpoutbase=%eval(&tcpinbase.+&maxunits.);
-%let tcpwait=300;  /* in seconds */
 
 /*------------------------------------------------------------
   the actual execution unit 

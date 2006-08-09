@@ -37,9 +37,10 @@ options sascmd='sas -work /tmp' autosignon;
   port, hard-coded as numbers.
 ------------------------------------------------------------*/
 %let tcpinbase=20000;
-%let maxunits=10;
+%let maxunits=2;
 %let tcpoutbase=%eval(&tcpinbase.+&maxunits.);
 %let tcpwait=300;  /* in seconds */
+%let sasbase=10000; /* port base for SAS spawner tunnels */
 
 /*------------------------------------------------------------
   the actual execution unit 
@@ -53,8 +54,10 @@ options sascmd='sas -work /tmp' autosignon;
 */
 %do i=1 %to &maxunits.;
         %if ( &mpconnect = yes ) %then %do;
+            %let n&i.=localhost %eval(&sasbase.+&i.);
+
             /*---------- SIGNON ----------*/
-            SIGNON n&i. sascmd="sas -altlog local_n_&i..log -work /tmp";
+            SIGNON n&i. /* sascmd="sas -altlog local_n_&i..log -work /tmp" */;
             %syslput thisdir=&thisdir.;
             %syslput i=&i.;
 	    %syslput tcpinbase=&tcpinbase.;
