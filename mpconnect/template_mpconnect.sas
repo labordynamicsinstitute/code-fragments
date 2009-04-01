@@ -10,7 +10,7 @@ options mprint symbolgen sascmd='sas -work /tmp' autosignon;
         %if ( &mpconnect = yes ) %then %do;
             /*---------- SIGNON ----------*/
             SIGNON run&i.;
-            %syslput thisdir=&thisdir.;
+            %syslput thisdir=%QUOTE(&thisdir.)/REMOTE=run&i.&j.;
             %syslput i=&i.;
             RSUBMIT run&i. WAIT=NO;
         %end; /* end of mpconnect config */
