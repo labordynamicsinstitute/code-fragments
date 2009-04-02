@@ -2,7 +2,7 @@
 /* $URL$ */
 /* $Author$ */
 options mprint symbolgen sascmd='sas -work /tmp' autosignon;
-%let mpconnect=yes;
+%let mpconnect=no;
 %macro runit;
             %let thisdir=%sysget(PWD);
 
