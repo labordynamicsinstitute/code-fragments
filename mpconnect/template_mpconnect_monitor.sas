@@ -249,7 +249,7 @@ run;
 	     end_time=.,
 	     running=1,
 	     completed=.
-            where (i=&i. and j=&j.))
+            where (i=&i. and j=&j.)
 	    ;
        quit;
 
@@ -285,7 +285,7 @@ run;
 	    set
               completed=0 ,
 	      end_time=datetime()
-            where (i=&i. and j=&j.))
+            where (i=&i. and j=&j.)
 	    ;
        quit;
 
