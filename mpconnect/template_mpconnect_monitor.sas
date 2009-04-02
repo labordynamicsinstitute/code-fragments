@@ -1,7 +1,7 @@
 /* $Id$ */
 /* $URL$ */
 /* $Author$ */
-options mprint mlogic symbolgen sascmd='sas -cpucount 1 -work /home/vilhuber/tmp' autosignon;
+options mprint mlogic symbolgen sascmd='sas -cpucount 1 -work ~/tmp' autosignon;
 
 %macro rloop(loopmax=2,sleepsecs=30,mpconnect=yes);
 
@@ -31,8 +31,8 @@ libname metaread "&metadir." access=readonly;
 
 data METADATA.metadata;
      length mpconnect $ 3;
-     do i = 1 to 2;
-        do j = 1 to 2;
+     do i = 1 to 5;
+        do j = 1 to 4;
 	completed=.;
 	running=.;
 	label i = "Parameter i"
@@ -246,7 +246,7 @@ run;
 
 data one;
         do i =1 to 10000;
-	do j=1 to &j.*1;
+	do j=1 to &j.*100;
         k=ranuni(today());
         output;
         end;
@@ -316,7 +316,7 @@ data _null_;
 
 %mend;
 
-%rloop(loopmax=2,sleepsecs=5);
+%rloop(loopmax=12,sleepsecs=5);
 
 proc print data=METADATA.metadata;
 format start_time end_time datetime18.;
