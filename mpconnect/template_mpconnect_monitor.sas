@@ -266,6 +266,12 @@ run;
 /* Now we check if we have any jobs left to spawn             */
 /*============================================================*/
 
+%trylock(member=METAREAD.metadata);
+data metadata_tmp;
+     set METAREAD.metadata;
+run;
+%unlock(member=METAREAD.metadata);
+
 %let fileid=%sysfunc(open(WORK.metadata_tmp(where=(completed  ne 1 and
 running ne 1))));
 %let availNObs=%sysfunc(attrn(&fileid,NLOBSF));
