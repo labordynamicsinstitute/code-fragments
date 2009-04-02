@@ -14,10 +14,11 @@ options mprint mlogic symbolgen sascmd='sas -cpucount 1 -work ~/tmp' autosignon;
      maxjobs - how many jobs to keep running at the same time
      frequency - how frequently to check jobs
      mpconnect - if using MP/Connect (instead of sequential)
+     restart   - if restarting and saving the metadata, set to yes
 */
 /*============================================================*/
 
-%macro rloop(maxjobs=2,frequency=30,mpconnect=yes);
+%macro rloop(maxjobs=2,frequency=30,mpconnect=yes,restart=no);
 
 %if ( "&maxjobs." = "1" ) %then %let mpconnect=no;
 %else %let mpconnect=&mpconnect.;
@@ -52,6 +53,7 @@ libname metaread "&metadir." access=readonly;
    server instead. */
 /*============================================================*/
 
+%if ( &restart. = no ) %then %do;
 data METADATA.metadata;
      length mpconnect $ 3;
      do i = 1 to 5;
@@ -95,6 +97,7 @@ data METADATA.metadata_ctrl;
      value="&frequency.";
      output;
 run;
+%end; /* end restart condition */
 
 /*============================================================*/
 /* We write out two little utility programs that can be used
@@ -225,7 +228,13 @@ run;
 /*============================================================*/
 /* check how many jobs are running */
 
-%let fileid=%sysfunc(open(METADATA.metadata(where=(running=1))));
+%trylock(member=METAREAD.metadata);
+data metadata_tmp;
+     set METAREAD.metadata(where=(running=1));
+run;
+%unlock(member=METAREAD.metadata);
+
+%let fileid=%sysfunc(open(WORK.metadata_tmp(where=(running=1))));
 %let runningNObs=%sysfunc(attrn(&fileid,NLOBSF));
 %let fileid=%sysfunc(close(&fileid)); 
 
@@ -257,7 +266,7 @@ run;
 /* Now we check if we have any jobs left to spawn             */
 /*============================================================*/
 
-%let fileid=%sysfunc(open(METADATA.metadata(where=(completed  ne 1 and
+%let fileid=%sysfunc(open(WORK.metadata_tmp(where=(completed  ne 1 and
 running ne 1))));
 %let availNObs=%sysfunc(attrn(&fileid,NLOBSF));
 %let fileid=%sysfunc(close(&fileid)); 
