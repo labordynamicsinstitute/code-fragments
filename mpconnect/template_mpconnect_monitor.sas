@@ -195,7 +195,7 @@ run;
 
 %if ( &newjobs > 0 and &availNObs > 0 ) %then %do;
        data WORK.spawn;
-            set METADATA.metadata(where=
+            set METAREAD.metadata(where=
 		(running ne 1 
 			 and completed ne 1 
 			 and completed ne 0) 
@@ -235,14 +235,23 @@ run;
 	proc printto log="/ramdisk/job_i&i._j&j..log" new;
 	run;
 
-	/* update metadata */
-	data METADATA.metadata;
-	     modify METADATA.metadata(where=(i=&i. and j=&j.));
-	     start_time=datetime();
-	     end_time=.;
-	     running=1;
-	     completed=.;
-	     run;
+	/* update metadata, after a random wait */
+	data _null_;
+	wait=ranuni(int(datetime()));
+	why=sleep(wait*10,1);
+	run;
+
+	proc sql;
+	     update METADATA.metadata
+	     set
+	     start_time=datetime(),
+	     end_time=.,
+	     running=1,
+	     completed=.
+            where (i=&i. and j=&j.))
+	    ;
+       quit;
+
 
 data one;
         do i =1 to 10000;
@@ -264,6 +273,11 @@ run;
         %let obs_option=%sysfunc(getoption(obs)); 
 	options obs=max;
        %if ( &obs_option. = 0 ) %then %do;
+	data _null_;
+	wait=ranuni(int(datetime()));
+	why=sleep(wait*10,1);
+	run;
+
        proc sql;
 	    update METADATA.metadata
 	    set
