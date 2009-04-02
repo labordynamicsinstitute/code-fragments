@@ -1,7 +1,7 @@
 /* $Id$ */
 /* $URL$ */
 /* $Author$ */
-options mprint mlogic symbolgen sascmd='sas -work /home/vilhuber/tmp' autosignon;
+options mprint mlogic symbolgen sascmd='sas -cpucount 1 -work /home/vilhuber/tmp' autosignon;
 
 %macro rloop(loopmax=2,sleepsecs=30,mpconnect=yes);
 
@@ -21,6 +21,7 @@ options mprint mlogic symbolgen sascmd='sas -work /home/vilhuber/tmp' autosignon
 %let metadir=&thisdir.;
 %put metadir=&metadir.;
 libname metadata "&metadir.";
+libname metaread "&metadir." access=readonly;
 
 /*============================================================*/
 /* start the meta database n-dimensional                      */
@@ -83,13 +84,14 @@ run;
 /* check how many jobs are running */
 /*--------------------------------------------------*/
 
-%let fileid=%sysfunc(open(METADATA.metadata(where=(running=1))));
+
+%let fileid=%sysfunc(open(METAREAD.metadata(where=(running=1))));
 %let NObs=%sysfunc(attrn(&fileid,NLOBSF));
 %let fileid=%sysfunc(close(&fileid)); 
 
 %put %upcase(info)::: &NObs jobs appear to be running.;
 
-%let fileid=%sysfunc(open(METADATA.metadata(where=(running=1 and end_time ne .))));
+%let fileid=%sysfunc(open(METAREAD.metadata(where=(running=1 and end_time ne .))));
 %let NObs=%sysfunc(attrn(&fileid,NLOBSF));
 %let fileid=%sysfunc(close(&fileid)); 
 
@@ -109,7 +111,7 @@ run;
        %put %upcase(info)::: checking for output of job &pickup. of &NObs.;
 
        data _null_;
-            set METADATA.metadata(where=(running=1 and end_time ne .) obs=&pickup.);
+            set METAREAD.metadata(where=(running=1 and end_time ne .) obs=&pickup.);
             call symput('i',trim(left(i)));
             call symput('j',trim(left(j)));
 	    call symput('_mpconnect',trim(left(mpconnect)));
@@ -124,12 +126,19 @@ run;
            SIGNOFF run&i.&j.;
         %end;
 
-       data METADATA.metadata;
-            modify METADATA.metadata(where=(i=&i. and j=&j.));
-            running=0;
+	proc sql;
+	    update METADATA.metadata
+	    set
+            running=0
+            where (i=&i. and j=&j.)
+	    ;
+	    update METADATA.metadata
+	    set
+	       completed = 1 
 	    /* this will be set to zero if failed */
-            if completed = . then completed=1;
-       run;
+            where (i=&i. and j=&j. and  completed = .)
+	    ;
+	quit;
        
    %end; /* end pickup */
 %end; /* end NOBS>0 */
@@ -236,8 +245,8 @@ run;
 	     run;
 
 data one;
-        do i =1 to 100000;
-	do j=1 to &j.*100;
+        do i =1 to 10000;
+	do j=1 to &j.*1;
         k=ranuni(today());
         output;
         end;
@@ -255,18 +264,24 @@ run;
         %let obs_option=%sysfunc(getoption(obs)); 
 	options obs=max;
        %if ( &obs_option. = 0 ) %then %do;
-       data METADATA.metadata;
-            modify METADATA.metadata(where=(i=&i. and j=&j.));
-            completed=0;
-	    end_time=datetime();
-       run;
+       proc sql;
+	    update METADATA.metadata
+	    set
+              completed=0 ,
+	      end_time=datetime()
+            where (i=&i. and j=&j.))
+	    ;
+       quit;
 
        %end;
        %else %do;
-       data METADATA.metadata;
-            modify METADATA.metadata(where=(i=&i. and j=&j.));
-            end_time=datetime();
-       run;
+       proc sql;
+            update METADATA.metadata
+	    set end_time=datetime()
+            where (i=&i. and j=&j.)
+	    ;
+	    quit;
+
        %end;
 
 	proc printto log=log;
