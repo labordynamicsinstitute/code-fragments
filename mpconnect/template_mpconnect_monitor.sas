@@ -97,7 +97,7 @@ data METADATA.metadata_ctrl;
 run;
 
 /*============================================================*/
-/* We write out a little utility program that can be used
+/* We write out two little utility programs that can be used
    to tune the scheduling.*/
 /*============================================================*/
 data _null_;
@@ -108,6 +108,18 @@ put "libname here '.';                                    ";
 put "data here.metadata_ctrl;";
 put "modify here.metadata_ctrl(where=(parameter='maxjobs'));";
 put "value='12';";
+put "run;";
+run;
+
+data _null_;
+     file "&thisdir./modify_metadata.sas" ;
+put "/* This file can be used to reset a job's status */ ";
+put "/* Use wisely! */";
+put "libname here '.';                                    ";
+put "data here.metadata;";
+put "modify here.metadata(where=(i=1 and j=1));";
+put "completed=.;";
+put "running=.;";
 put "run;";
 run;
 
@@ -138,9 +150,11 @@ run;
 
 /* make a copy so it doesn't change on us */
 
+%trylock(member=METAREAD.metadata);
 data metadata_tmp;
      set METAREAD.metadata(where=(running=1));
 run;
+%unlock(member=METAREAD.metadata);
 
 %let fileid=%sysfunc(open(WORK.metadata_tmp(where=(running=1))));
 %let NObs=%sysfunc(attrn(&fileid,NLOBSF));
@@ -264,6 +278,7 @@ running ne 1))));
        quit;
        
 
+       %trylock(member=METAREAD.metadata);
        data WORK.spawn;
             set METAREAD.metadata(where=
 		(running ne 1 
@@ -273,6 +288,7 @@ running ne 1))));
 		submitted=0;
 		call symput('spawnmax',_n_);
        run;
+       %unlock(member=METAREAD.metadata);
 
        /* run through the spawn dataset */
        %do spawn=1 %to &spawnmax.;
