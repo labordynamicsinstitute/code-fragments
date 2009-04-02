@@ -155,12 +155,13 @@ run;
 
        data _null_;
             set WORK.metadata_tmp(where=(running=1 and end_time ne .) obs=&pickup.);
+	    if _n_ = &pickup.;
             call symput('i',trim(left(i)));
             call symput('j',trim(left(j)));
 	    call symput('_mpconnect',trim(left(mpconnect)));
+       put "%upcase(info)::: Job &pickup of &NObs." _n_= i= j= "has completed" completed=;
        run;
 
-       %put %upcase(info)::: Job i=&i. j=&j. has completed.;
        
        /* get log files if the job was spawned off  using mpconnect */
         %if ( &_mpconnect = yes ) %then %do;
