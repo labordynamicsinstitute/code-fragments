@@ -3,9 +3,23 @@
 /* $Author$ */
 options mprint mlogic symbolgen sascmd='sas -cpucount 1 -work ~/tmp' autosignon;
 
-%macro rloop(loopmax=2,sleepsecs=30,mpconnect=yes);
+/*============================================================*/
+/* Spawns off MP/Connect jobs, keeping track of what was      */
+/* spawned off, and collects them. Monitoring is at fixed     */
+/* granularity, but can be modified on the fly. Note that     */
+/* if the checking is TOO fast, jobs may be submitted multiple*/
+/* times!                                                     */
+/*                                                            */
+/* Parameters:
+     maxjobs - how many jobs to keep running at the same time
+     frequency - how frequently to check jobs
+     mpconnect - if using MP/Connect (instead of sequential)
+*/
+/*============================================================*/
 
-%if ( "&loopmax." = "1" ) %then %let mpconnect=no;
+%macro rloop(maxjobs=2,frequency=30,mpconnect=yes);
+
+%if ( "&maxjobs." = "1" ) %then %let mpconnect=no;
 %else %let mpconnect=&mpconnect.;
 
 %let thisdir=%sysget(PWD);
@@ -58,16 +72,16 @@ run;
 
 data METADATA.metadata_ctrl;
      length parameter value $ 30 ;
-     parameter="loopmax";
-     value="&loopmax.";
+     parameter="maxjobs";
+     value="&maxjobs.";
      output;
 
      parameter="mpconnect";
      value="&mpconnect.";
      output;
 
-     parameter="sleepsecs";
-     value="&sleepsecs.";
+     parameter="frequency";
+     value="&frequency.";
      output;
 run;
 
@@ -171,14 +185,14 @@ data _null_;
      put "%upcase(info)::: Current parameters:" parameter "=" value;
 run;
 
-%if ( &loopmax. < &NObs. ) %then %do;
+%if ( &maxjobs. < &NObs. ) %then %do;
 
     /* warn the user somehow. For example, by writing to log */
-    %put %upcase(warn)::: There are only &loopmax. allowed to be running.;
+    %put %upcase(warn)::: There are only &maxjobs. allowed to be running.;
     %put %upcase(warn)::: Please make certain that this is expected.;
 
 %end;
-%else %let newjobs=%eval(&loopmax.-&NObs.);
+%else %let newjobs=%eval(&maxjobs.-&NObs.);
 
 /*============================================================*/
 /* We have identified the number of jobs that we can run      */
@@ -325,11 +339,11 @@ run;
 %end; /* end of newjobs>0 */
 
 %if ( &jobs_running. = 1 ) %then %do;
-%put %upcase(info)::: Sleeping for &sleepsecs. seconds;
+%put %upcase(info)::: Sleeping for &frequency. seconds;
 
 
 data _null_;
-     i=sleep(&sleepsecs.,1);
+     i=sleep(&frequency.,1);
      run;
 %end; /* end of  %if ( &jobs_running. = 1 ) */
 
@@ -338,7 +352,7 @@ data _null_;
 
 %mend;
 
-%rloop(loopmax=12,sleepsecs=5);
+%rloop(maxjobs=12,frequency=30);
 
 proc print data=METADATA.metadata;
 format start_time end_time datetime18.;
