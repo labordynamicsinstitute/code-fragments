@@ -99,7 +99,7 @@ run;
    to tune the scheduling.*/
 /*============================================================*/
 data _null_;
-     file "&thisdir./modify_metadata_ctrl.sas" replace;
+     file "&thisdir./modify_metadata_ctrl.sas" ;
 put "/* This file can be used to finetune the scheduling */ ";
 put "/* Use wisely! */";
 put "libname here '.';                                    ";
