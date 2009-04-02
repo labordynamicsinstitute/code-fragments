@@ -40,7 +40,16 @@ libname metaread "&metadir." access=readonly;
 /*============================================================*/
 /* start the meta database n-dimensional                      */
 /* Additional job parameters could be stuck in there,             
-   and a more convenient job identifier if too many params    */
+   and a more convenient job identifier if too many params    
+   If only using a single job database, this needs to be fully
+   expanded, and all parameters available here. In this setup,
+   this database is accessible by all MP/Connect jobs, so
+   job parameters do NOT need to be pushed via SYSLPUT. Use 
+   METAREAD when only wanting to query, to minize the likelihood
+   of any write conflict, and use PROC SQL for better record-
+   level control. If too many jobs are likely to enter into 
+   conflict, modify this program to spawn off a SAS/Share 
+   server instead. */
 /*============================================================*/
 
 data METADATA.metadata;
@@ -83,6 +92,21 @@ data METADATA.metadata_ctrl;
      parameter="frequency";
      value="&frequency.";
      output;
+run;
+
+/*============================================================*/
+/* We write out a little utility program that can be used
+   to tune the scheduling.*/
+/*============================================================*/
+data _null_;
+     file "&thisdir./modify_metadata_ctrl.sas" replace;
+put "/* This file can be used to finetune the scheduling */ ";
+put "/* Use wisely! */";
+put "libname here '.';                                    ";
+put "data here.metadata_ctrl;";
+put "modify here.metadata_ctrl(where=(parameter='maxjobs'));";
+put "value='12';";
+put "run;";
 run;
 
 
