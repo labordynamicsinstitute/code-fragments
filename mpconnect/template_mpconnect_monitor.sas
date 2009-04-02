@@ -237,8 +237,9 @@ run;
 
 	/* update metadata, after a random wait */
 	data _null_;
-	wait=ranuni(int(datetime()));
-	why=sleep(wait*10,1);
+	sleeping=ranuni(int(datetime()))*10;
+	put "%upcase(info)::: "sleeping=;
+	why=sleep(sleeping,1);
 	run;
 
 	proc sql;
@@ -274,8 +275,9 @@ run;
 	options obs=max;
        %if ( &obs_option. = 0 ) %then %do;
 	data _null_;
-	wait=ranuni(int(datetime()));
-	why=sleep(wait*10,1);
+	sleeping=ranuni(int(datetime()))*10;
+	put "%upcase(info)::: "sleeping=;
+	why=sleep(sleeping,1);
 	run;
 
        proc sql;
