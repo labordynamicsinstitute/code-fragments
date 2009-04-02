@@ -1,6 +1,8 @@
 /* $Id$ */
 /* $URL$ */
 /* $Author$ */
+/* Author: Lars Vilhuber, Cornell University */
+
 options mprint symbolgen sascmd='sas -work /tmp' autosignon;
 %let mpconnect=no;
 %macro runit;
