@@ -238,7 +238,7 @@ run;
 	/* update metadata, after a random wait */
 	data _null_;
 	sleeping=ranuni(int(datetime()))*10;
-	put "%upcase(info)::: "sleeping=;
+	put "%upcase(info)::: " sleeping=;
 	why=sleep(sleeping,1);
 	run;
 
@@ -276,7 +276,7 @@ run;
        %if ( &obs_option. = 0 ) %then %do;
 	data _null_;
 	sleeping=ranuni(int(datetime()))*10;
-	put "%upcase(info)::: "sleeping=;
+	put "%upcase(info)::: " sleeping=;
 	why=sleep(sleeping,1);
 	run;
 
