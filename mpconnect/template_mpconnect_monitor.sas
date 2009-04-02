@@ -84,14 +84,19 @@ run;
 /* check how many jobs are running */
 /*--------------------------------------------------*/
 
+/* make a copy so it doesn't change on us */
 
-%let fileid=%sysfunc(open(METAREAD.metadata(where=(running=1))));
+data metadata_tmp;
+     set METAREAD.metadata(where=(running=1));
+run;
+
+%let fileid=%sysfunc(open(WORK.metadata_tmp(where=(running=1))));
 %let NObs=%sysfunc(attrn(&fileid,NLOBSF));
 %let fileid=%sysfunc(close(&fileid)); 
 
 %put %upcase(info)::: &NObs jobs appear to be running.;
 
-%let fileid=%sysfunc(open(METAREAD.metadata(where=(running=1 and end_time ne .))));
+%let fileid=%sysfunc(open(WORK.metadata_tmp(where=(running=1 and end_time ne .))));
 %let NObs=%sysfunc(attrn(&fileid,NLOBSF));
 %let fileid=%sysfunc(close(&fileid)); 
 
@@ -111,7 +116,7 @@ run;
        %put %upcase(info)::: checking for output of job &pickup. of &NObs.;
 
        data _null_;
-            set METAREAD.metadata(where=(running=1 and end_time ne .) obs=&pickup.);
+            set WORK.metadata_tmp(where=(running=1 and end_time ne .) obs=&pickup.);
             call symput('i',trim(left(i)));
             call symput('j',trim(left(j)));
 	    call symput('_mpconnect',trim(left(mpconnect)));
