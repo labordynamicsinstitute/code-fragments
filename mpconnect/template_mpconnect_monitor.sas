@@ -217,6 +217,7 @@ run;
 	    call symput('i',trim(left(i)));
 	    call symput('j',trim(left(j)));
 	    /* pull any other info out here as well */
+	    put "%upcase(info)::: Submitting job " i= j=;
        run;
 
         %if ( &mpconnect = yes ) %then %do;
