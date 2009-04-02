@@ -58,17 +58,19 @@ data METADATA.metadata;
         do j = 1 to 4;
 	completed=.;
 	running=.;
+	jobid=.;
 	label i = "Parameter i"
               j = "Parameter j"
 	      completed = "Has job completed? miss/0/1"
 	      running = "Is job running? miss/0/1"
+	      jobid = "Unix job id"
 	      start_time = "Start time of job"
 	      end_time = "End time of job"
 	      mpconnect = "MP/Connect job: yes/no"
 	      ;
 	start_time=.;
 	end_time=.;      
-	mpconnect="&mpconnect";
+	mpconnect="";
 	output;
 	end;
      end;
@@ -108,6 +110,18 @@ put "modify here.metadata_ctrl(where=(parameter='maxjobs'));";
 put "value='12';";
 put "run;";
 run;
+
+/*============================================================*/
+/* To cleanly lock the database. From
+   http://www.lexjansen.com/pharmasug/2005/posters/po33.pdf
+*/
+/*============================================================*/
+%include "&thisdir./trylock.sas";
+
+/*============================================================*/
+/* For completeness, we also have a complementary macro       */
+/*============================================================*/
+%include "&thisdir./unlock.sas";
 
 
 /*============================================================*/
@@ -159,7 +173,7 @@ run;
             call symput('i',trim(left(i)));
             call symput('j',trim(left(j)));
 	    call symput('_mpconnect',trim(left(mpconnect)));
-       put "%upcase(info)::: Job &pickup of &NObs." _n_= i= j= "has completed" completed=;
+       put "%upcase(info)::: Job &pickup of &NObs. "  i= j= "has completed " completed=;
        run;
 
        
@@ -170,10 +184,12 @@ run;
            SIGNOFF run&i.&j.;
         %end;
 
+	%trylock(member=METADATA.metadata);
+
 	proc sql;
 	    update METADATA.metadata
 	    set
-            running=0
+            running=0, jobid=., mpconnect=''
             where (i=&i. and j=&j.)
 	    ;
 	    update METADATA.metadata
@@ -183,6 +199,8 @@ run;
             where (i=&i. and j=&j. and  completed = .)
 	    ;
 	quit;
+
+	%unlock(member=METADATA.metadata);
        
    %end; /* end pickup */
 %end; /* end NOBS>0 */
@@ -194,10 +212,10 @@ run;
 /* check how many jobs are running */
 
 %let fileid=%sysfunc(open(METADATA.metadata(where=(running=1))));
-%let NObs=%sysfunc(attrn(&fileid,NLOBSF));
+%let runningNObs=%sysfunc(attrn(&fileid,NLOBSF));
 %let fileid=%sysfunc(close(&fileid)); 
 
-%put %upcase(info)::: &NObs jobs still running.;
+%put %upcase(info)::: &runningNObs jobs still running.;
 
 /*============================================================*/
 /* We again check against our ctrl parameters 
@@ -210,34 +228,42 @@ data _null_;
      put "%upcase(info)::: Current parameters:" parameter "=" value;
 run;
 
-%if ( &maxjobs. < &NObs. ) %then %do;
+%if ( &maxjobs. < &runningNObs. ) %then %do;
 
     /* warn the user somehow. For example, by writing to log */
     %put %upcase(warn)::: There are only &maxjobs. allowed to be running.;
     %put %upcase(warn)::: Please make certain that this is expected.;
+    %let newjobs=0;
 
 %end;
-%else %let newjobs=%eval(&maxjobs.-&NObs.);
+%else %let newjobs=%eval(&maxjobs.-&runningNObs.);
 
 /*============================================================*/
 /* We have identified the number of jobs that we can run      */
 /* Now we check if we have any jobs left to spawn             */
 /*============================================================*/
 
-%let fileid=%sysfunc(open(METADATA.metadata(where=(completed  ne 1))));
+%let fileid=%sysfunc(open(METADATA.metadata(where=(completed  ne 1 and
+running ne 1))));
 %let availNObs=%sysfunc(attrn(&fileid,NLOBSF));
 %let fileid=%sysfunc(close(&fileid)); 
 
 %put %upcase(info)::: &availNObs jobs available for submission.;
+%put %upcase(info)::: &newjobs can be submitted at this time.;
 
 
 /*============================================================*/
 /* Now we spawn them off                                      */
 /*============================================================*/
 
-%if &availNObs. = 0 %then %let jobs_running=0;
+%if ( &availNObs. = 0 and &runningNObs. = 0 ) %then %let jobs_running=0;
 
 %if ( &newjobs > 0 and &availNObs > 0 ) %then %do;
+       proc datasets library=work nolist;
+       delete spawn;
+       quit;
+       
+
        data WORK.spawn;
             set METAREAD.metadata(where=
 		(running ne 1 
@@ -264,12 +290,15 @@ run;
             SIGNON run&i.&j.;
             %syslput thisdir=%QUOTE(&thisdir.)/REMOTE=run&i.&j.;
             %syslput metadir=%QUOTE(&metadir.)/REMOTE=run&i.&j.;
+            %syslput mpconnect=&mpconnect./REMOTE=run&i.&j.;
             %syslput i=&i./REMOTE=run&i.&j.;
             %syslput j=&j./REMOTE=run&i.&j.;
 	    %syslput mywork=%QUOTE(&mywork.)/REMOTE=run&i.&j.;
             RSUBMIT run&i.&j. WAIT=NO;
             options obs=max;
 	    libname METADATA "&metadir";
+            %include "&thisdir./trylock.sas";
+            %include "&thisdir./unlock.sas";
         %end; /* end of mpconnect config */
 
 data _null_;
@@ -287,17 +316,22 @@ run;
 	why=sleep(sleeping,1);
 	run;
 
+	%trylock(member=METADATA.metadata);
+
 	proc sql;
 	     update METADATA.metadata
 	     set
 	     start_time=datetime(),
 	     end_time=.,
 	     running=1,
-	     completed=.
+	     completed=.,
+	     jobid=&sysjobid.,
+	     mpconnect="&mpconnect."
             where (i=&i. and j=&j.)
 	    ;
        quit;
 
+	%unlock(member=METADATA.metadata);
 
 data one;
         do i =1 to 10000;
@@ -318,12 +352,15 @@ run;
 	/* capture error */
         %let obs_option=%sysfunc(getoption(obs)); 
 	options obs=max;
-       %if ( &obs_option. = 0 ) %then %do;
+
 	data _null_;
 	sleeping=ranuni(int(datetime()))*10;
 	put "%upcase(info)::: " sleeping=;
 	why=sleep(sleeping,1);
 	run;
+	%trylock(member=METADATA.metadata);
+
+       %if ( &obs_option. = 0 ) %then %do;
 
        proc sql;
 	    update METADATA.metadata
@@ -344,6 +381,8 @@ run;
 	    quit;
 
        %end;
+
+	%unlock(member=METADATA.metadata);
 
 	proc printto log=log;
 	run;
@@ -375,9 +414,11 @@ data _null_;
 
 %end; /* end of  %while ( &jobs_running. = 1 ) */
 
+%put %upcase(info)::: Ending processing,  &availNObs jobs available for submission.;
+
 %mend;
 
-%rloop(maxjobs=12,frequency=30);
+%rloop(maxjobs=3,frequency=10);
 
 proc print data=METADATA.metadata;
 format start_time end_time datetime18.;
