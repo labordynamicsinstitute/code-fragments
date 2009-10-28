@@ -1,0 +1,24 @@
+Output in SAS v8
+1) Data set: every proc output can be put into a data set
+2) Listing (window)
+3) Flat file - programming, selection and saving (Explorer window), and
+"file ods" statement in data step
+4) Graphics - SAS graphs, Java, ActiveX
+5) NEW: HTML, RTF
+6) NEW: printer (PCL, PS, PDF?)
+
+To create output dataset using ODS:
+
+ods output <ODS-PATH-NAME>=<name of dataset>;
+
+For instance, Proc contents generates element
+Contents.Dataset.VariablesAlpha containing the information on all
+variables. To create a dataset with only that information, 
+
+ODS OUTPUT [CONTENTS.DATASET.]VARIABLESALPHA=MYCONTENTS;
+proc contents data=wherever.test;
+run;
+ODS OUTPUT CLOSE;
+proc print data=mycontents;
+run;
+

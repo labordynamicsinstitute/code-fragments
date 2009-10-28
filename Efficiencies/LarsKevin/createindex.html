@@ -1,0 +1,25 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+  <HEAD>
+    <TITLE>Creating an index (10-Dec-1999)</TITLE>
+    <!-- Created by: Lars Vilhuber, 10-Dec-1999 -->
+    <!-- Changed by: Lars Vilhuber, 10-Dec-1999 -->
+
+
+  </HEAD>
+<body bgcolor="#FFFFFF">
+    <H1>Creating an index</H1>
+<pre>
+libname ssel92 "/data/working/vilhu001/ssel/1992";
+options mprint msglevel=i;
+
+proc datasets lib=ssel92;
+modify ssel92mu;
+index create ein;
+modify ssel92su;
+index create ein;
+quit;
+</pre>
+
+  </BODY>
+</HTML>

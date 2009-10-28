@@ -1,0 +1,71 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+  <HEAD>
+    <TITLE>SQL with an existing index (10-Dec-1999)</TITLE>
+    <!-- Created by: Lars Vilhuber, 10-Dec-1999 -->
+    <!-- Changed by: Lars Vilhuber, 10-Dec-1999 -->
+
+
+  </HEAD>
+<body bgcolor="#FFFFFF">
+    <H1>SQL with an existing index</H1>
+
+This uses SQL with an existing index on the master data files.
+
+<pre>
+/*-----------test-sqlset.sas------------------------*/
+/* Original Author: Lars Vilhuber, Kevin McKinney   */
+/* Created   : <99/07/20 09:12:40 vilhu001>         */
+/* Modified by:                                     */
+/* Time-stamp: <99/12/07 10:15:20 vilhu001>         */
+/*--------------------------------------------------*/
+/* this takes a given year of the MD xwalk          */
+/* and extracts all corresponding EIN observations  */
+/* from the SSEL of that year                       */
+/*--------------------------------------------------*/
+/* This version: xwalk is resorted to EIN           */
+/* and SSEL(MU/SU) is indexed on EIN                */
+/*--------------------------------------------------*/
+
+libname working "/data/working/Title26/saswork/lv-junk";
+libname perm2 "/data/working/vilhu001/ssel";
+libname perm "/data/working/ssel/uimd-ssel/";
+libname ssel92 "/data/working/vilhu001/ssel/1992";
+libname mdfedid "/data/working/vilhu001/ssel/sasdata";
+options mprint msglevel=i;
+
+%let perm=perm. ;
+%global working perm;
+%let ssel=ssel;
+
+title3 "This program: testing index/sort";
+%let xwalk=fed9098;
+%let yrmin=90;
+%let yrmax=98;
+
+
+proc sql;
+    title "Selecting MU";
+    create table mu as
+    select ppn, ccs, cfn, ein, act, sic, ctygeo, pdiv, "0" as su
+	from ssel92.&ssel.92mu
+	where ein in 
+	   ( select distinct ein 
+	      from mdfedid.&xwalk.
+	      where year=92 )
+	    and ACT NOT IN ('G','D')
+	;
+    create table md92_92 as
+    select ppn, ccs, cfn, ein, act, sic, ctygeo, pdiv, "1" as su
+	from ssel92.&ssel.92su
+	where ein in 
+	   ( select distinct ein 
+	      from mdfedid.&xwalk.
+	      where year=92 )
+	    and ACT NOT IN ('G','D');
+
+</pre>
+
+
+  </BODY>
+</HTML>
