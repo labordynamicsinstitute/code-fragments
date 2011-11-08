@@ -16,6 +16,8 @@
 
 options mprint symbolgen ;
 libname OUTPUTS '.';
+%include "config_grid.sas";
+%include "config_user.sas";
 
 /*------------------------------------------------------------
   Size of the test run in this program
@@ -31,16 +33,6 @@ options sascmd='sas -work /tmp' autosignon;
 ------------------------------------------------------------*/
 %let mpconnect=yes;
 
-/*------------------------------------------------------------
-  check that this works on your system.
-  All communication ports will be above this
-  port, hard-coded as numbers.
-------------------------------------------------------------*/
-%let tcpinbase=20000;
-%let maxunits=2;
-%let tcpoutbase=%eval(&tcpinbase.+&maxunits.);
-%let tcpwait=300;  /* in seconds */
-%let sasbase=10000; /* port base for SAS spawner tunnels */
 
 /*------------------------------------------------------------
   the actual execution unit 
@@ -54,10 +46,16 @@ options sascmd='sas -work /tmp' autosignon;
 */
 %do i=1 %to &maxunits.;
         %if ( &mpconnect = yes ) %then %do;
-            %let n&i.=localhost %eval(&sasbase.+&i.);
 
-            /*---------- SIGNON ----------*/
-            SIGNON n&i. /* sascmd="sas -altlog local_n_&i..log -work /tmp" */;
+            /*---------- SIGNON depends on SMP setting ----------*/
+	    %if ( "&smp" = "yes" ) %then %do;
+               SIGNON n&i. sascmd="sas -altlog local_n_&i..log -work /tmp" 
+	    %end;
+	    %else %do;
+               %let n&i.=localhost %eval(&sasbase.+&i.);
+               SIGNON n&i. user=&remoteuser. password="&remotepwd.";
+	    %end;
+
             %syslput thisdir=&thisdir.;
             %syslput i=&i.;
 	    %syslput tcpinbase=&tcpinbase.;
@@ -89,7 +87,7 @@ options sascmd='sas -work /tmp' autosignon;
 
      %do i=1 %to &maxunits.;
         %if ( &mpconnect = yes ) %then %do;
-            /*---------- SIGNON ----------*/
+            /*---------- SIGNON here is always the SMP version ----------*/
             SIGNON c&i. sascmd="sas -altlog local_c_&i..log -work /tmp";
             %syslput thisdir=&thisdir.;
             %syslput maxunits=&maxunits.;

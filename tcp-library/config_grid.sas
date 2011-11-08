@@ -8,7 +8,8 @@
   port, hard-coded as numbers.
 ------------------------------------------------------------*/
 %let tcpinbase=20000;
-%let maxunits=2;
+%let maxunits=1;
 %let tcpoutbase=%eval(&tcpinbase.+&maxunits.);
 %let tcpwait=300;  /* in seconds */
 %let sasbase=10000; /* port base for SAS spawner tunnels */
+%let smp=no;

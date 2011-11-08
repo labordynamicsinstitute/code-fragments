@@ -3,7 +3,7 @@
 /* $Author$ */
 /* Author: Lars Vilhuber, Cornell University */
 
-options mprint symbolgen sascmd='sas -work /tmp' autosignon;
+options mprint symbolgen sascmd='ssh lv39@vrdc6402.vrdc.cornell.edu sas -work /tmp' autosignon;
 %let mpconnect=yes;
 %macro runit;
             %let thisdir=%sysget(PWD);
