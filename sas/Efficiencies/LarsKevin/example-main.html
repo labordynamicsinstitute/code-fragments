@@ -1,0 +1,141 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+  <HEAD>
+    <TITLE>Learning how to double-set (19-Jul-2000)</TITLE>
+    <!-- Created by: Lars Vilhuber, 10-Dec-1999 -->
+    <!-- Changed by: Lars Vilhuber, 19-Jul-2000 -->
+
+
+  </HEAD>
+  <BODY bgcolor="#FFFFFF">
+    <H1>Learning how to double-set</H1>
+
+This little toy program helped us to understand what goes on when doing a double set with a key statement. 
+The program is <A HREF="test-key.html" target="top">here</A> , the output <A HREF="test-key.lst.html" target="bottom">here</A>, 
+and the log file <A HREF="test-key.log.html" target="bottom">here</A>. A commented version follows. Click on the links to
+view the appropriate program, output, and log files.
+
+<OL>
+  <LI> <B> Reading in (and printing) the data </b>
+    The original datasets are created by a read in [<A HREF="test-key.html#reading_in" target="top">Program file</A>, 
+    <A HREF="test-key.lst.html#reading_in_1" target=bottom>Output</A> 
+    (<A HREF="test-key.lst.html#reading_in_1" target=bottom>Data1</A>, 
+    <A HREF="test-key.lst.html#reading_in_2" target=bottom>Data2</A>)].
+    You'll be able to come back to these for easy reference. 
+ </LI>
+
+  <LI> <B> Creating the indexes </B> [<A HREF="test-key.html#create_index" target="top">Program file</A>, 
+    <A HREF="test-key.log.html#create_index" target=bottom>Logfile</A>]. The Proc datasets procedure is the way to
+    go for creating and deleting indexes. The command (after modify DATASET;) to delete is simply <i>index delete Name_Of_index</i>.
+    Note that no output is created in the .lst file. Note also that the lookup file (data2) does not need to be indexed for this
+    to work. In fact, it does not even need to be sorted. Try it out yourself by downloading the 
+<A HREF="test-key.sas">original SAS program</A> to your home directory, modifying and running it. 
+ </LI>
+
+  <LI> <B> First try</B>: [<A HREF="test-key.html#test1" target="top">Program file</A>, 
+    <A HREF="test-key.lst.html#test1" target=bottom>Output</A>]
+This kind of set statement will work if the keys are unique on both files, since it goes in and picks out the first 
+observation (in physical sort order at the time the index was created), discarding all other matches. 
+(<A HREF="test-key.lst.html#reading_in_1" target=top>Compare with the original data files</A>).
+
+ </LI>
+  <LI><B> Second try</B>: [<A HREF="test-key.html#test2" target="top">Program file</A>, 
+    <A HREF="test-key.lst.html#test2" target=bottom>Output</A>]
+Although the merge key is not unique on the Master data, we wondered what would happen if we specified the <i>unique</i> modifier.
+Nothing different happened here, so we still have to find out what happens otherwise.
+(<A HREF="test-key.lst.html#reading_in_1" target=top>Compare with the original data files</A>).
+ 							   
+ </LI>
+  <LI> <B> Third try</B>: [<A HREF="test-key.html#test3" target="top">Program file</A>, 
+    <A HREF="test-key.lst.html#test3" target=bottom>Output</A>]
+We then tried to get multiple observations per lookup observation. The <i>_iorc_</i> variable is zero if a match was found, 
+and positive if not. So we thought: read until you find a non-match, at which point you then go to the next lookup in the 
+lookup data set. However, as you can see 
+(<A HREF="test-key.lst.html#reading_in_1" target=top>Compare with the original data files</A>), this did not work. 
+The reason is that our <i>do while</i> loops gets executed at the time of the first non-match as well, leading to observation 
+4 in the output dataset. We don't really quite understand why it does not output the other observations. We would have thought
+(after the fact) that the logic would output all matching observations plus the first non-matching, but that does not seem to
+be the case. For you to figure out - we just retain that this does not work.
+ </LI>
+  <LI> <B>Fourth try</B>: [<A HREF="test-key.html#test4" target="top">Program file</A>, 
+    <A HREF="test-key.lst.html#test4" target=bottom>Output</A>]
+The trick is to create an auxiliary variable, <i>continue</i>, which allows us to create a supplementary condition
+within the <i>do while</i> loop. This is the STRONGLY SUGGESTED way of using these double set statements!
+(<A HREF="test-key.lst.html#reading_in_1" target=top>Compare with the original data files</A>)
+ </LI>
+</ol>
+<p>
+<hr>
+<p>
+<h2> Addendum by Kevin McKinney (Date: June 30, 2000)</h2>
+
+The original double set code developed by Kevin and Lars is suitable
+for a unique list of key values in the TRANSACTION (<i>lookup, data2</i>) dataset and
+multiple records for the key variable in the MASTER (<i>data1</i>) dataset. The original double set code is not designed to handle lookups for the following
+situations. <p>
+
+NOTE:  If the MASTER dataset is known to have only one record for each
+key value then the code in example one is more efficient although the
+original code will still work. <p>
+
+NOTE: Only the matches are output in these examples.  Additional code will be
+needed to handle non-matches.<p>
+
+
+<ol>
+  <li> The dataset in the first set statement (TRANSACTION, lookup) is not a unique
+list
+ of key values and the dataset in the second set statement (MASTER) does
+ have a unique set of key values. (The reason we use the double set here is
+because MASTER is far larger than TRANSACTION) Example: 
+<A HREF="test-key.html#reading_in_3" target="top"><i>data3</i></a>. The KEY is
+SEIN YEAR QUARTER.  The key value is repeated for the first two records and
+again in the fifth record. <p>
+
+Using the standard double set code SAS will not find a record in the master
+dataset for the second record in the transaction dataset.  This occurs
+because SAS does not move the pointer from its previous position until it
+needs to look up a record in the transaction dataset with  a different key
+value.  Observation five, like observation two, has the same key value as
+observation one.  A record from the master dataset will be returned for
+observation five since the pointer has been moved when the double set
+was issued for observations three and four(they have a different key value). <p>
+
+In this case we can remove the continue loop from the 
+<A HREF="test-key.html#test4" target="top"><i>original double-set code</i></a> since the observations in the
+MASTER dataset are unique.  We also must add the <A HREF="test-key.html#kevin_example_1" target="bottom">UNIQUE</a> option to the
+second set statement.  This code is more efficient than the original
+double set code since only one lookup is performed for each record in
+the transaction dataset. <P>
+
+THUS: Use this in all cases when you know the
+MASTER dataset key is unique.<P>
+</li>
+
+<li>The dataset in the first set statement (TRANSACTION, lookup) is not a unique list
+ of key values and the dataset in the second set statement (MASTER) does NOT
+ have a unique set of key values. <p>
+
+<i>Example</i>:  
+
+Imagine we are looking up a series of EIN's from the work 
+history file in the SSEL.  Some of these EIN's will be repeated since 
+individuals work for the same EIN in different years and also because
+multiple people work at the same firm. The <A HREF="test-key.html#reading_in_4" target="top">dataset</a> has the same structure as in example one.  The KEY (ein) is repeated for observation one, two, and five. <p>
+
+This case requires <A HREF="test-key.html#kevin_example_2" target="bottom">resetting the pointer</a> on each iteration of the data step.
+Unfortunately this requires two additional lookups in the MASTER dataset. Once
+to know when the end of all the records for that EIN is reached. Once more
+to reset the pointer. <p>
+
+Resetting the pointer is accomplished by looking up a key value that does not
+exist in the MASTER dataset.  I have chosen "zzzzzzzzz" for the EIN.  This may
+or may not be appropriate in your application. <p>
+   </li>
+ </ol>
+
+<hr width="80%">
+Any comments? Email <a href="mailto:lars.vilhuber@ccmail.census.gov">Lars</a> or 
+<a href="mailto:Kevin.L.McKinney@ccMail.Census.GOV">Kevin</a>.
+  </BODY>
+</HTML>

@@ -1,0 +1,29 @@
+ODS Presentation 24/10/2000
+Complete Guide to ODS
+
+ods html <options>;
+ods html close;
+dm 'wbrowse "html file";
+ods listing close;
+
+In proc tabulate: options
+s=(foreground={color})
+
+proc report (ods5.sas)
+
+proc tabulate;
+class month / preloadFmt [for missing data in class variable];
+
+In data step:
+put _ods_ whatever;
+
+Table of contents feature: how to customize?
+
+Graphing w/ drilldown capabilities:
+ods html;
+goptions device=java;
+proc gchart ...;
+ods html close;
+
+PDF/RTF capabilities? 8.2
+

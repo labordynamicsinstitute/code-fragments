@@ -1,0 +1,320 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.7 [en] (X11; U; Linux 2.2.10 i686) [Netscape]">
+   <title>Merging and sorting methods (10-Dec-1999)</title>
+<!-- Created by: Lars Vilhuber, 10-Dec-1999 -->
+<!-- Changed by: Lars Vilhuber, 10-Dec-1999 -->
+</head>
+<body bgcolor="#FFFFFF">
+
+<h1>
+Merging and sorting methods</h1>
+
+<h2>
+Results of benchmarking on different techniques:</h2>
+
+<dl>
+<dt>
+Setup:</dt>
+
+<dd>
+<a href="benchmark.html">Benchmarking</a> was done using the 1992 SSEL
+MU and SU files. Together, they contain 10 881 999 observations. An extract
+is done from the Maryland EIN-SEIN crosswalk files, for 1992 only. This
+extract is "merged" first with the MU file (output file: work.mu) and then
+with the SU file (output file: work.su). Work.mu and work.su are then "joined"
+using a variety of procedures. The resulting file has 512 869 observations
+(5 percent of the original, combined MU+SU file).</dd>
+
+<dt>
+Statistics:</dt>
+
+<dd>
+The first line is SYSTEM_CPU time, the second one is USER_CPU, the third
+one is I/O operations (read + write). Time is the total time for the entire
+procedure (the initial selection step, and the joining of the resultant
+two data files). Times and I/O reported in the first column are for that
+sub-routine only (they are included in the measures in the cross-tabs).
+These are averages from 5 or 10 runs of the program.</dd>
+
+<dt>
+OVERHEAD FOR <a href="createindex.html">INDEX CREATION</a></dt>
+
+<dl>
+<dt>
+(5 replications)</dt>
+
+<ul>
+<li>
+MU file (1 958 000 obs) and SU file (9 605 164 obs)</li>
+
+<li>
+System_CPU : 6.7821 min</li>
+
+<li>
+User_CPU : 1.079766 min</li>
+
+<li>
+I/O : 960 499</li>
+</ul>
+</dl>
+
+<dt>
+Summary</dt>
+
+<dd>
+When using a small file (here: xwalk) to select observations from a far
+larger master file (here: ssel92mu and ssel92su), and the latter contains
+potentially multiple matches to the common identifier, all of which we
+want to keep, then a <a href="setkey.html">double set statement</a> with
+a key on the master files is the most efficient way. In the example given
+here, we selected observations on two mutually exclusive master files:
+the manner in which the two files were put together are not really relevant
+to performance (as the results from the three columns shows). Since the
+overhead of <a href="createindex.html">index creation</a> is incurred only
+once on files that do not change often, it is not relevant to this particular
+case.</dd>
+</dl>
+
+<center><table BORDER=0 >
+<caption align="top"><b><font size=+2>Results</font></b></caption>
+
+<tr>
+<th ALIGN=LEFT></th>
+
+<th ALIGN=CENTER COLSPAN="3">Combining methods</th>
+</tr>
+
+<tr>
+<td ALIGN=LEFT><b>Merge method</b></td>
+
+<td ALIGN=CENTER><i><a href="procappend.html">PROC APPEND</a></i></td>
+
+<td ALIGN=CENTER><i><a href="datamerge.html">DATA step MERGE</a></i></td>
+
+<td ALIGN=CENTER><i><a href="datainterleave.html">DATA step interleave</a></i></td>
+</tr>
+
+<tr>
+<td ALIGN=LEFT COLSPAN="4">
+<hr></td>
+</tr>
+
+<tr>
+<td><a href="setkey.html">Set with KEY= statement</a></td>
+
+<td>0.91445</td>
+
+<td>0.878283</td>
+
+<td>0.893017</td>
+
+<td></td>
+</tr>
+
+<tr>
+<td>[0.752333/5000]</td>
+
+<td>0.38351</td>
+
+<td>0.42165</td>
+
+<td>0.399867</td>
+
+<td></td>
+</tr>
+
+<tr>
+<td></td>
+
+<td>8229</td>
+
+<td>9141</td>
+
+<td>9135</td>
+
+<td></td>
+</tr>
+
+<tr>
+<td ALIGN=LEFT COLSPAN="4">
+<hr></td>
+</tr>
+
+<tr>
+<td>[Second run, with 5</td>
+
+<td>0.8276</td>
+
+<td>0.7976</td>
+
+<td>0.8124</td>
+</tr>
+
+<tr>
+<td>replications]</td>
+
+<td>0.38183</td>
+
+<td>0.418934</td>
+
+<td>0.397266</td>
+</tr>
+
+<tr>
+<td></td>
+
+<td>11245</td>
+
+<td>11899</td>
+
+<td>11873</td>
+</tr>
+
+<tr>
+<td></td>
+
+<td>[<a href="test-indexset2.log">details</a>]</td>
+
+<td>[<a href="test-indexset3.log">details</a>]</td>
+
+<td>[<a href="test-indexset4.log">details</a>]</td>
+</tr>
+
+<tr>
+<td ALIGN=LEFT COLSPAN="4">
+<hr></td>
+</tr>
+
+<tr>
+<td><a href="mergeindex.html">Merge with BY, indexed</a></td>
+
+<td>8.69388</td>
+
+<td>8.69275</td>
+
+<td>8.67255</td>
+</tr>
+
+<tr>
+<td>[8.567/4580.67]</td>
+
+<td>3.90852</td>
+
+<td>3.91428</td>
+
+<td>3.92482</td>
+</tr>
+
+<tr>
+<td></td>
+
+<td>21454</td>
+
+<td>25813</td>
+
+<td>24168</td>
+</tr>
+
+<tr>
+<td></td>
+
+<td>[<a href="test-mergesort2.log">details</a>]</td>
+
+<td>[<a href="test-mergesort3.log">details</a>]</td>
+
+<td>[<a href="test-mergesort4.log">details</a>]</td>
+</tr>
+
+<tr>
+<td ALIGN=LEFT COLSPAN="4">
+<hr></td>
+</tr>
+
+<tr>
+<td><a href="sqlindex.html">SQL/index</a></td>
+
+<td>4.2728</td>
+
+<td></td>
+
+<td></td>
+</tr>
+
+<tr>
+<td></td>
+
+<td>5.4208</td>
+
+<td></td>
+
+<td></td>
+</tr>
+
+<tr>
+<td></td>
+
+<td>326291</td>
+
+<td></td>
+
+<td></td>
+</tr>
+
+<tr>
+<td></td>
+
+<td>[<a href="test-sqlset.log">details</a>]</td>
+</tr>
+
+<tr>
+<td ALIGN=LEFT COLSPAN="4">
+<hr></td>
+</tr>
+
+<tr>
+<td><a href="sqlnoind.html">SQL w/o index</a></td>
+
+<td>6.77326</td>
+
+<td></td>
+
+<td></td>
+</tr>
+
+<tr>
+<td></td>
+
+<td>2.48294</td>
+
+<td></td>
+
+<td></td>
+</tr>
+
+<tr>
+<td></td>
+
+<td>920428</td>
+
+<td></td>
+
+<td></td>
+</tr>
+
+<tr>
+<td></td>
+
+<td>[<a href="test-sqlnokey.log">details</a>]</td>
+</tr>
+
+<tr>
+<td ALIGN=LEFT COLSPAN="4">
+<hr></td>
+</tr>
+</table></center>
+
+</body>
+</html>

@@ -1,0 +1,371 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+  <HEAD>
+    <TITLE>test-key.log (13-Dec-1999)</TITLE>
+    <!-- Created by: Lars Vilhuber, 13-Dec-1999 -->
+    <!-- Changed by: Lars Vilhuber, 13-Dec-1999 -->
+
+
+  </HEAD>
+  <BODY bgcolor="#FFFFFF">
+    <H1>test-key.log</H1>
+<pre>
+
+1                                                          The SAS System                            13:44 Friday, December 10, 1999
+
+NOTE: Copyright (c) 1989-1996 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software Release 6.12  TS040
+      Licensed to BUREAU OF THE CENSUS, Site 0031684009.
+
+
+
+WARNING: Your system is scheduled to expire on January 1, 2000, which is 22 days from now. Please contact your installation 
+         representative to have your system renewed. The SAS system will no longer function on or after that date.
+
+This message is contained in the SAS news file, and is presented upon
+initialization.  Edit the files "news" in the "misc/base" directory to
+display site-specific news and information in the program log.
+The command line option "-nonews" will prevent this display.
+
+
+
+NOTE: AUTOEXEC processing beginning; file is /data/working/vilhu001/ssel/autoexec.sas.
+
+NOTE: SAS initialization used:
+      real time           0.07 seconds
+      cpu time            0.07 seconds
+      
+
+NOTE: AUTOEXEC processing completed.
+</pre>
+<A NAME="reading_in"></A>
+<pre>
+1          options msglevel=i;
+2          
+3          data data1;
+WARNING: The BASE Product product with which DATASTEP is associated will 
+         expire within 30 days. Please contact your SAS installation 
+         representative to have it renewed.
+4          input a b ;
+5          cards;
+
+NOTE: The data set WORK.DATA1 has 10 observations and 2 variables.
+NOTE: DATA statement used:
+      time:                           memory:
+         real        0.05 seconds        page faults   0 
+         user cpu    0.00 seconds        page reclaims 20 
+         system cpu  0.02 seconds        usage         69 K
+      block I/O operations:           context switches:
+         input       0                   voluntary     2
+         output      26                  involuntary   0
+      
+
+16         ;
+17         
+18         data data2;
+WARNING: The BASE Product product with which DATASTEP is associated will 
+         expire within 30 days. Please contact your SAS installation 
+         representative to have it renewed.
+19         input a c $;
+20         cards;
+
+NOTE: The data set WORK.DATA2 has 4 observations and 2 variables.
+NOTE: DATA statement used:
+      time:                           memory:
+         real        0.02 seconds        page faults   0 
+2                               The SAS System 13:44 Friday, December 10, 1999
+
+         user cpu    0.00 seconds        page reclaims 5 
+         system cpu  0.01 seconds        usage         69 K
+      block I/O operations:           context switches:
+         input       0                   voluntary     2
+         output      15                  involuntary   0
+      
+
+25         ;
+26         
+27         
+28         title1 "Testing different double sets";
+29         title2 "Data1: Large master data set";
+30         proc print data=data1;
+WARNING: The BASE Product product with which PRINT is associated will expire 
+         within 30 days. Please contact your SAS installation representative 
+         to have it renewed.
+31         
+32         title2 "Data2: small lookup data set";
+
+NOTE: The PROCEDURE PRINT printed page 1.
+NOTE: PROCEDURE PRINT used:
+      time:                           memory:
+         real        0.01 seconds        page faults   0 
+         user cpu    0.00 seconds        page reclaims 5 
+         system cpu  0.00 seconds        usage         15 K
+      block I/O operations:           context switches:
+         input       0                   voluntary     0
+         output      2                   involuntary   0
+      
+
+33         proc print data=data2;
+WARNING: The BASE Product product with which PRINT is associated will expire 
+         within 30 days. Please contact your SAS installation representative 
+         to have it renewed.
+34         
+
+NOTE: The PROCEDURE PRINT printed page 2.
+NOTE: PROCEDURE PRINT used:
+      time:                           memory:
+         real        0.00 seconds        page faults   0 
+         user cpu    0.00 seconds        page reclaims 3 
+         system cpu  0.00 seconds        usage         15 K
+      block I/O operations:           context switches:
+         input       0                   voluntary     0
+         output      0                   involuntary   0
+      
+</pre>
+<A NAME="create_index"></A>
+<pre>
+35         proc datasets lib=work;
+WARNING: The BASE Product product with which DATASETS is associated will 
+         expire within 30 days. Please contact your SAS installation 
+         representative to have it renewed.
+                             -----Directory-----
+
+          Libref:            WORK
+          Engine:            V612
+          Physical Name:     /data/working/saswork/SAS_worka00005599
+          File Name:         /data/working/saswork/SAS_worka00005599
+3                               The SAS System 13:44 Friday, December 10, 1999
+
+          Inode Number:      13087
+          Access Permission: rwx------
+          Owner Name:        vilhu001
+          File Size (bytes): 8192
+
+                          #  Name   Memtype  Indexes
+                          --------------------------
+                          1  DATA1  DATA            
+                          2  DATA2  DATA            
+36         modify data1;
+37         index create a;
+NOTE: Single index A defined.
+38         modify data2;
+39         index create a;
+NOTE: Single index A defined.
+40         run;
+
+41         
+
+NOTE: PROCEDURE DATASETS used:
+      time:                           memory:
+         real        0.13 seconds        page faults   0 
+         user cpu    0.00 seconds        page reclaims 19 
+         system cpu  0.05 seconds        usage         139 K
+      block I/O operations:           context switches:
+         input       0                   voluntary     22
+         output      30                  involuntary   1
+      
+</pre>
+<A NAME="test1"></A>
+<pre>
+42         title2 "----- first test -----";
+43         data test;
+WARNING: The BASE Product product with which DATASTEP is associated will 
+         expire within 30 days. Please contact your SAS installation 
+         representative to have it renewed.
+44         set data2;
+45             set data1 key=a;
+46         run;
+
+NOTE: The data set WORK.TEST has 4 observations and 3 variables.
+NOTE: DATA statement used:
+      time:                           memory:
+         real        0.02 seconds        page faults   0 
+         user cpu    0.00 seconds        page reclaims 17 
+         system cpu  0.02 seconds        usage         73 K
+      block I/O operations:           context switches:
+         input       0                   voluntary     2
+         output      15                  involuntary   0
+      
+
+47         
+48         proc print data=test;
+WARNING: The BASE Product product with which PRINT is associated will expire 
+         within 30 days. Please contact your SAS installation representative 
+         to have it renewed.
+49         run;
+
+NOTE: The PROCEDURE PRINT printed page 3.
+4                               The SAS System 13:44 Friday, December 10, 1999
+
+NOTE: PROCEDURE PRINT used:
+      time:                           memory:
+         real        0.00 seconds        page faults   0 
+         user cpu    0.00 seconds        page reclaims 2 
+         system cpu  0.00 seconds        usage         15 K
+      block I/O operations:           context switches:
+         input       0                   voluntary     0
+         output      0                   involuntary   0
+      
+</pre>
+<A NAME="test2"></A>
+<pre>
+50         
+51         title2 "-----  second test  -----";
+52         
+53         data test;
+WARNING: The BASE Product product with which DATASTEP is associated will 
+         expire within 30 days. Please contact your SAS installation 
+         representative to have it renewed.
+54         set data2;
+55             set data1 key=a/unique;
+56         run;
+
+NOTE: The data set WORK.TEST has 4 observations and 3 variables.
+NOTE: DATA statement used:
+      time:                           memory:
+         real        0.23 seconds        page faults   0 
+         user cpu    0.00 seconds        page reclaims 17 
+         system cpu  0.02 seconds        usage         73 K
+      block I/O operations:           context switches:
+         input       0                   voluntary     11
+         output      24                  involuntary   0
+      
+
+57         
+58         proc print data=test;
+WARNING: The BASE Product product with which PRINT is associated will expire 
+         within 30 days. Please contact your SAS installation representative 
+         to have it renewed.
+59         run;
+
+NOTE: The PROCEDURE PRINT printed page 4.
+NOTE: PROCEDURE PRINT used:
+      time:                           memory:
+         real        0.00 seconds        page faults   0 
+         user cpu    0.00 seconds        page reclaims 2 
+         system cpu  0.00 seconds        usage         15 K
+      block I/O operations:           context switches:
+         input       0                   voluntary     0
+         output      0                   involuntary   0
+      
+</pre>
+<A NAME="test3"></A>
+<pre>
+60         
+61         title2 "-----  third test  -----";
+62         
+63         data test;
+WARNING: The BASE Product product with which DATASTEP is associated will 
+         expire within 30 days. Please contact your SAS installation 
+         representative to have it renewed.
+5                               The SAS System 13:44 Friday, December 10, 1999
+
+64         set data2;
+65         do while ( _iorc_ =0 );
+66             set data1 key=a;
+67             output;
+68         end;
+69         if _iorc_ ne 0 then do;
+70             _error_ =0;
+71             delete;
+72         end;
+73         run;
+
+NOTE: The data set WORK.TEST has 4 observations and 3 variables.
+NOTE: DATA statement used:
+      time:                           memory:
+         real        0.03 seconds        page faults   0 
+         user cpu    0.00 seconds        page reclaims 17 
+         system cpu  0.02 seconds        usage         73 K
+      block I/O operations:           context switches:
+         input       0                   voluntary     2
+         output      16                  involuntary   1
+      
+
+74         
+75         proc print data=test;
+WARNING: The BASE Product product with which PRINT is associated will expire 
+         within 30 days. Please contact your SAS installation representative 
+         to have it renewed.
+76         run;
+
+NOTE: The PROCEDURE PRINT printed page 5.
+NOTE: PROCEDURE PRINT used:
+      time:                           memory:
+         real        0.00 seconds        page faults   0 
+         user cpu    0.00 seconds        page reclaims 2 
+         system cpu  0.00 seconds        usage         15 K
+      block I/O operations:           context switches:
+         input       0                   voluntary     0
+         output      0                   involuntary   0
+      
+</pre>
+<A NAME="test4"></A>
+<pre>
+77         
+78         title2 "-----  fourth test  -----";
+79         
+80         data test;
+WARNING: The BASE Product product with which DATASTEP is associated will 
+         expire within 30 days. Please contact your SAS installation 
+         representative to have it renewed.
+81         set data2;
+82         continue=0;
+83         do while ( continue=0 );
+84             set data1 key=a;
+85             if _iorc_ = 0 then do;
+86         	output;
+87         	end;
+88             else do;
+89                _error_=0;
+90                continue=1;
+6                               The SAS System 13:44 Friday, December 10, 1999
+
+91             end;
+92         end;
+93         run;
+
+NOTE: The data set WORK.TEST has 10 observations and 4 variables.
+NOTE: DATA statement used:
+      time:                           memory:
+         real        0.02 seconds        page faults   0 
+         user cpu    0.00 seconds        page reclaims 17 
+         system cpu  0.02 seconds        usage         73 K
+      block I/O operations:           context switches:
+         input       0                   voluntary     2
+         output      15                  involuntary   0
+      
+
+94         
+95         proc print data=test;
+WARNING: The BASE Product product with which PRINT is associated will expire 
+         within 30 days. Please contact your SAS installation representative 
+         to have it renewed.
+96         run;
+
+NOTE: The PROCEDURE PRINT printed page 6.
+NOTE: PROCEDURE PRINT used:
+      time:                           memory:
+         real        0.00 seconds        page faults   0 
+         user cpu    0.00 seconds        page reclaims 2 
+         system cpu  0.00 seconds        usage         15 K
+      block I/O operations:           context switches:
+         input       0                   voluntary     0
+         output      0                   involuntary   0
+      
+
+97         
+
+NOTE: The SAS System used:
+      time:                           memory:
+         real        0.66 seconds        page faults   0 
+         user cpu    0.06 seconds        page reclaims 275 
+         system cpu  0.28 seconds        usage         1.75 M
+      block I/O operations:           context switches:
+         input       0                   voluntary     43
+         output      181                 involuntary   2
+      
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+</pre>
+  </BODY>
+</HTML>
