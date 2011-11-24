@@ -1,0 +1,7 @@
+#!/bin/bash
+#PBS -l ncpus=3
+#PBS -j oe
+cd /home/lv39/Workspace/xsede
+R --no-save -q < test_doSNOW.R > test_doSNOW.Rout
+ 
+

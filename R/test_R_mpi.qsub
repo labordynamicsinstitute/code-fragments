@@ -1,0 +1,12 @@
+#!/bin/csh
+#PBS -l ncpus=8
+#ncpus must be a multiple of 8
+#PBS -l walltime=5:00                 
+#PBS -j oe
+cd /home/lv39/Workspace/xsede
+set echo
+RMPISNOW=/home/lv39/R/x86_64-redhat-linux-gnu-library/2.13/snow/RMPISNOW
+#run my executable
+mpirun -np 8 R --no-save -q < SGEtest.R > SGEtest.Rout
+ 
+
