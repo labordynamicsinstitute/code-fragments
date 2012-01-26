@@ -3,8 +3,10 @@ pkglist=pkglist.SSG.txt
 outfile=build-R-SSG.R
 CRANURL=http://www.vrdc.cornell.edu/CRAN/src/contrib
 version=2.14.0
+wd=$(pwd)
 . config.sh
 
+[[ -d $lib ]] || mkdir -p $lib
 
 
 printf "%20s" "pkgs <- c(" > $outfile
@@ -26,10 +28,10 @@ echo " Press CTRL-C to interrupt within the next 5 seconds"
 sleep 5
 echo " Running "
 $Rbin CMD BATCH $outfile
-cat ${outfile}out
 #echo " Installing Umacs"
 #R CMD INSTALL Umacs_0.924.tar.gz >>${outfile}out
-echo "Installing ASREML-R"
+echo "Installing ASREML-R [enter]"
+read
 R CMD INSTALL /home/admin/extras/ASREML/asreml_3.0.1_R_gl-centos5.5-intel64.tar.gz -l $lib >>${outfile}out
 
 cat ${outfile}out
@@ -42,7 +44,7 @@ done
 
 echo " Verify remove-core.sh, then"
 echo " do" 
-echo " (cd $base; tar czvf ${wd}/R-packages-SSG-$version.tgz $libbase)"
+echo " (cd $lib/..; tar czvf ${wd}/R-packages-SSG-$version.tgz library/)"
 
 
 

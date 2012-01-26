@@ -13,3 +13,5 @@ rm -rf /export/home/admin/extras/R/R-2.14/R/library//nnet
 rm -rf /export/home/admin/extras/R/R-2.14/R/library//rpart
 rm -rf /export/home/admin/extras/R/R-2.14/R/library//spatial
 rm -rf /export/home/admin/extras/R/R-2.14/R/library//survival
+rm -rf /export/home/admin/extras/R/R-2.14/R/library//parallel
+rm -rf /export/home/admin/extras/R/R-2.14/R/library//compiler

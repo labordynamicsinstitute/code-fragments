@@ -3,6 +3,7 @@ boot
 class
 cluster
 codetools
+compiler
 datasets
 foreign
 graphics
@@ -16,6 +17,7 @@ methods
 mgcv
 nlme
 nnet
+parallel
 rpart
 spatial
 splines

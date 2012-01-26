@@ -196,6 +196,7 @@ statnet
 stats
 stats4
 strucchange
+SuppDists
 survey
 survival
 synchronicity
