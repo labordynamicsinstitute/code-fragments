@@ -1,9 +1,9 @@
 #!/bin/bash
-pkglist=pkglist.bioconducator.txt
+pkglist=pkglist.bioconductor.txt
 outfile=build-R-SSG-extras.R
-CRANURL=http://www.vrdc.cornell.edu/CRAN/src/contrib
+#CRANURL=http://www.vrdc.cornell.edu/CRAN/src/contrib
 BIOURL=http://www.bioconductor.org/biocLite.R
-lib=/scratch/lv39
+lib=$HOME/build/R
 Rbin=/cac/contrib/R-2.14.0/bin/R
 
 printf "%20s" "pkgs <- c(" > $outfile
@@ -16,7 +16,7 @@ echo ")" >> $outfile
 count=$(cat $pkglist| wc -l)
 
 echo "source(\"$BIOURL\")" >> $outfile
-echo "biocLite(pkgs, suppressUpdates = false, lib='$lib')">> $outfile 
+echo "biocLite(pkgs=pkgs, suppressUpdates = FALSE, lib='$lib')">> $outfile 
 echo "warnings()" >> $outfile
 
 # now we run it
