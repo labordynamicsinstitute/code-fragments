@@ -1,9 +1,8 @@
 #!/bin/bash
-pkglist=pkglist.bioconducator.txt
-outfile=build-R-SSG-extras.R
+pkglist=pkglist.CAC.txt
+outfile=build-R-CAC.R
 CRANURL=http://www.vrdc.cornell.edu/CRAN/src/contrib
-BIOURL=http://www.bioconductor.org/biocLite.R
-lib=/scratch/lv39
+lib=$HOME/build/R
 Rbin=/cac/contrib/R-2.14.0/bin/R
 
 printf "%20s" "pkgs <- c(" > $outfile
@@ -15,12 +14,11 @@ echo ")" >> $outfile
 
 count=$(cat $pkglist| wc -l)
 
-echo "source(\"$BIOURL\")" >> $outfile
-echo "biocLite(pkgs, suppressUpdates = false, contriburl='$CRANURL', lib='$lib')">> $outfile 
+echo "install.packages(pkgs, contriburl='$CRANURL', lib='$lib')">> $outfile 
 echo "warnings()" >> $outfile
 
 # now we run it
-echo "We will now run the progrom to create $count Bioconductor packages"
+echo "We will now run the progrom to create $count CRAN packages"
 echo "   $Rbin CMD BATCH $outfile" 
 echo " Press CTRL-C to interrupt within the next 5 seconds"
 sleep 5
