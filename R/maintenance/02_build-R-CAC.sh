@@ -3,7 +3,8 @@ pkglist=pkglist.CAC.txt
 outfile=build-R-CAC.R
 CRANURL=http://www.vrdc.cornell.edu/CRAN/src/contrib
 lib=$HOME/build/R
-Rbin=/cac/contrib/R-2.14.0/bin/R
+. config.sh
+
 
 printf "%20s" "pkgs <- c(" > $outfile
 cat $pkglist |\
@@ -25,5 +26,15 @@ sleep 5
 echo " Running "
 $Rbin CMD BATCH $outfile
 cat ${outfile}out
+
+# we need to clean out some packages that were re-compiled
+for arg in $(cat core-packages.txt)
+do
+[[ -d $lib/$arg ]] && echo \rm -rf $lib/$arg >> remove-core.sh
+done
+
+echo " Verify remove-core.sh, then"
+echo " do" 
+echo " (cd $base; tar czvf ${wd}/R-packages-SSG-$version.tgz $libbase)"
 
 

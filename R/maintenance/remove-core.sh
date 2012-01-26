@@ -1,0 +1,15 @@
+rm -rf /export/home/admin/extras/R/R-2.14/R/library//boot
+rm -rf /export/home/admin/extras/R/R-2.14/R/library//class
+rm -rf /export/home/admin/extras/R/R-2.14/R/library//cluster
+rm -rf /export/home/admin/extras/R/R-2.14/R/library//codetools
+rm -rf /export/home/admin/extras/R/R-2.14/R/library//foreign
+rm -rf /export/home/admin/extras/R/R-2.14/R/library//KernSmooth
+rm -rf /export/home/admin/extras/R/R-2.14/R/library//lattice
+rm -rf /export/home/admin/extras/R/R-2.14/R/library//MASS
+rm -rf /export/home/admin/extras/R/R-2.14/R/library//Matrix
+rm -rf /export/home/admin/extras/R/R-2.14/R/library//mgcv
+rm -rf /export/home/admin/extras/R/R-2.14/R/library//nlme
+rm -rf /export/home/admin/extras/R/R-2.14/R/library//nnet
+rm -rf /export/home/admin/extras/R/R-2.14/R/library//rpart
+rm -rf /export/home/admin/extras/R/R-2.14/R/library//spatial
+rm -rf /export/home/admin/extras/R/R-2.14/R/library//survival
