@@ -1,0 +1,76 @@
+#!/bin/bash
+if [[ -z $1 ]]
+    then
+    cat << EOF
+    (beta - please provide feedback)
+ 
+    $0 prog[.R] chunks
+
+    will launch R under PBS-like systems, requesting [chunks] chunks
+    and adjusting R memsize appropriately.
+
+    If not specifying [chunks], uses 1 CPU and 8GB of RAM.
+    Chunks are defined in units of 2CPUS:16GB of RAM
+
+    If these limits are insufficient, you may need to run a 
+    custom qsub job with '#PBS -l mem=XXXXmb' as one of the PBS options.
+
+    (expert usage)
+    To add additional PBS options, set a environment variable PBSEXTRA
+    with the full set of options. It will be appended to the qsub
+    command line 
+EOF
+exit
+    fi
+
+    if [[ -z $2 ]]
+	then
+	chunks=0
+	cpucount=1
+	resources="-l ncpus=1,mem=8192mb"
+    else
+	chunks=$2
+        node=$3
+	let cpucount=${chunks}*2
+        let memsize=${cpucount}*8192
+	resources="-l ncpus=$cpucount,mem=${memsize}mb"
+        [[ -z $node ]] || resources="${resources},nodes=compute-0-$node" 
+    fi
+
+[[ -z $node ]] || echo " Undocumented feature: launching on node $node"
+
+    Rprog=$1
+    pbsname=$(basename $Rprog .R)
+    pbsname=${pbsname:0:15}
+    if [[ "$(basename $Rprog .R)" = "$Rprog" ]]
+	then
+	Rprog=$Rprog.R
+    fi
+logfile=$(basename $Rprog .R).log
+output=$(basename $Rprog .R).Rout
+
+echo " Error messages written to $logfile"
+echo " Output written to $output"
+printf "%-20s :" "Job ID is" 
+
+# compute memsize - don't know if this is optimal
+    let memsize=${cpucount}*8192
+    let membytes=${memsize}*1024
+    memsize=$memsize"m"
+
+    echo '#!/bin/bash' "
+#PBS -N $pbsname
+#PBS $resources
+#PBS -j oe
+#PBS -m ae
+cd $PWD
+umask $(umask)
+ulimit -m $membytes
+R --vanilla < $Rprog > $output 2> $logfile
+
+exitcode=\$?
+[[ \$exitcode = 1 ]] && exit 0 || exit \$exitcode
+" | qsub $PBSEXTRA
+
+
+

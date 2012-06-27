@@ -1,0 +1,235 @@
+#!/bin/bash
+
+args=$@
+argcnt=$#
+function print_help
+{
+    cat << EOF
+Usage: qsas prog[.sas] [CHUNKS/CPUCOUNT]
+       qsas --sasprog=prog[.sas] [OPTION]... 
+Launch SAS under PBS-like systems and allow adjustment of SAS command-line parameters.
+Setting the sasprog is mandatory, all other parameters are optional.
+Currently sets memsize, sortsize, and sumsize automatically. When specifying the number
+of chunks/cpucount, these variables will be set as follows unless overridden in the options:
+    memsize = chunks * 5000MB
+    sortsize = memsize - 10MB
+    sumsize = memsize - 10MB
+By default the number of chunks/cpucount is 1.
+
+Options:
+    --sasprog=FILE        Run FILE in a PBS-like system. '.sas' extension need not be specified.
+    --chunks=NUM,
+    --cpucount=NUM        Use NUM chunks/CPUs to process the SAS program.
+    --memsize=NUM         Set the SAS memsize as NUM megabytes.
+    --sortsize=NUM        Set the SAS sortsize as NUM megabytes. sortsize may not be larger than memsize.
+    --sumsize=NUM         Set the SAS sumzie as NUM megabytes. sumsize may not be larger than memsize.
+    --altlog=FILE         Set the SAS altlog to be FILE. No error checking is done on the file or location.
+    --pbsname=LABEL       Set the name of the job for entering in the PBS queue. The standard is to
+                          use the first 15 digits of the program name.
+    --mailops=OPS         Set the PBSPro events for which emails should be sent. The --mailto option must be set
+                          properly for any email notifications to go out. The options are as follow:
+                          n=No Emails (default); a=Send mail if job is aborted; b=Send mail when job executes; and
+                          e=Send mail when job terminates. a, b, and e, can be used in combination.
+    --mailto=ADDR         Send PBSPro event emails to ADDR, which should be in the form of USER@SERVER. Use
+                          the --mailops option to set which event emails should be sent.
+    --verbose             Turn on verbose mode. Prints all settings prior to running job.
+    --debug               Turn on debug. All code will run except that the job will not be placed in the PBS
+                          queue. Also, running in debug mode will set the verbose flag as well.
+
+Written by Rob Creecy
+Modified by Matthew Graham
+Report bugs to <matthew.graham@census.gov>.
+EOF
+
+exit 0
+}
+
+function parse_args
+{
+	set -- $args
+	[[ $# = 0 ]] && print_help
+	case $1 in
+		--help|-h)
+			print_help
+			;;
+		-*)
+			positional=no
+			;;
+		*)
+			positional=yes
+			[[ -z $1 ]] || sasprog=$1
+			[[ -z $2 ]] || cpucount=$2
+			if [[ $# -gt 2 ]]
+			then
+			    echo "Warning: Too many positional parameters."
+			    print_help
+			fi
+			quiet=no
+			;;
+	esac
+	[[ $positional = yes ]] && return
+
+	while [[ ! -z $1 ]]
+	do
+		case $1 in
+			--sasprog*)
+				sasprog=${1##*=}
+				;;
+			--chunks*)
+				cpucount=${1##*=}
+				;;
+			--cpucount*)
+				cpucount=${1##*=}
+				;;
+			--memsize*)
+				memsize=${1##*=}
+				if [[ $memsize -lt 20 ]]
+				then
+				    echo "Warning: memsize not allowed to be less than 20 (MB). Resetting to 20MB."
+				    memsize=20
+				fi
+				if [[ $memsize -gt 80000 ]]
+				then
+				    echo "Warning: memsize not allowed to be greater than 80 GB. Resetting to 80000MB."
+				    memsize=80000
+				fi
+				;;
+			--sortsize*)
+				sortsize=${1##*=}
+				if [[ $sortsize -ge $memsize ]]
+				then
+				    echo "Warning: sortsize (${sortsize}) must be less than memsize (${memsize})."
+				    echo "Resetting sortsize to be 10MB less than memsize."
+				    sortsize=
+				fi
+				;;
+			--sumsize*)
+				sumsize=${1##*=}
+				if [[ $sumsize -ge $memsize ]]
+				then
+				    echo "Warning: sumsize (${sumsize}) must be less than memsize (${memsize})."
+				    echo "Resetting sumsize to be 10MB less than memsize."
+				    sumsize=
+				fi
+				;;
+			--altlog*)
+				altlog=${1##*=}
+	    		# check for fullpath here
+				if [[ "$(dirname $altlog)" = "." ]]
+				then
+					altlog=$(pwd)/$(basename $altlog)
+				fi
+#				if [[ "${altlog:0:1}" -ne "/" ]]
+#				then
+#					altlog=$(pwd)/$altlog
+#				fi
+				;;
+			--pbsname*)
+				pbsname=${1##*=}
+				;;
+			--mailops*)
+				mailops=${1##*=}
+				;;
+			--mailto*)
+				mailto=${1##*=}
+				;;
+		    --verbose*)
+			    verbose=yes
+				;;
+		    --debug*)
+		        echo "Debug Mode On: PBS Job will NOT be started."
+		        debug=yes
+ 		        verbose=yes
+				;;
+			--quiet*)
+				quiet=yes
+				;;
+			*)
+				echo "Oops. Unknown parameter. Check your command line"
+				echo "$*"
+				exit 2
+				;;
+		esac
+		shift
+	done
+	[[ -z $sasprog && -z $cpucount ]] && print_help
+
+}
+
+function calc_params
+{
+	# Reform the program name to make sure the ".sas" extension is there.
+	baseprog=$(basename $sasprog .sas)
+	sasprog=$(dirname $sasprog)/$baseprog.sas
+
+   	# If current directory is referenced, change to full path.
+	# All other relative directory references will be left intact.
+	if [[ "$(dirname $sasprog)" = "." ]]
+	then
+		sasprog=$(pwd)/$(basename $sasprog)
+	fi
+
+	[[ -z $cpucount ]] && cpucount=1
+	[[ -z $memsize ]] && memsize=$(( ${cpucount}*5000 ))
+	[[ -z $sumsize ]] && sumsize=$(( ${memsize}-10 ))
+	[[ -z $sortsize ]] && sortsize=$(( ${memsize}-10 ))
+	[[ -z $altlog ]] || extras="-altlog ${altlog}"
+    [[ -z $pbsname ]] && pbsname=${baseprog:0:15}
+    [[ -z $mailto ]] && mailto=$USER
+    [[ -z $mailops ]] && mailops=n
+	resources="-l ncpus=$cpucount,mem=${memsize}mb"
+
+	# Cpucount needs to be less than 24.
+    if [[ cpucount -gt 24 ]]
+    then
+		echo "The number of CPUs (chunks) cannot be larger than 24."
+		echo "You entered: chunks/cpucount=$cpucount"
+		exit 2
+    fi
+
+	# These variables need special formatting after getting their values.
+    memsize=$memsize"m"
+    sumsize=$sumsize"m"
+    sortsize=$sortsize"m"
+
+}
+
+function verbose_print
+{
+    cat <<EOF
+Verbose Mode On
+
+PARAMETERS:
+sasprog=$sasprog 
+chunks/cpucount=$cpucount 
+memsize=$memsize 
+sumsize=$sumsize 
+sortsize=$sortsize 
+extras=$extras 
+pbsname=$pbsname 
+mailto=$mailto
+mailops=$mailops
+resources=$resources
+sas command=sas -noterminal -cpucount $cpucount -memsize $memsize -sumsize $sumsize -sortsize $sortsize $extras $sasprog
+
+EOF
+}
+
+function run_program
+{
+    echo '#!/bin/bash' "
+#PBS -N $pbsname
+#PBS -M $mailto
+#PBS -m $mailops
+#PBS $resources
+#PBS -j oe
+cd $PWD
+sas -noterminal -cpucount $cpucount -memsize $memsize -sumsize $sumsize -sortsize $sortsize $extras $sasprog" | qsub
+}
+
+
+#------ Run Main Program ------
+parse_args
+calc_params
+[[ -z $verbose ]] || verbose_print
+[[ -z $debug ]] && run_program

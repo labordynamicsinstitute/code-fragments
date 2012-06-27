@@ -1,0 +1,53 @@
+#!/bin/bash
+if [[ -z $1 ]]
+    then
+    cat << EOF
+    $0 prog[.sas] 
+
+    will launch SAS under PBS-like systems, requesting 120GB of memory
+    and adjusting SAS memsize, sortsize, and sumsize appropriately.
+
+    This forces it onto the one large-memory node. 
+
+    WARNING: the large-memory node runs slower. You really only 
+    want this if you needs more memory.
+
+EOF
+exit
+    fi
+
+        node=3
+	let cpucount=8
+        let memsize=122880
+	resources="-l ncpus=$cpucount,mem=${memsize}mb"
+        [[ -z $node ]] || resources="${resources},nodes=compute-0-$node" 
+
+[[ -z $node ]] || echo " Undocumented feature: launching on node $node"
+
+    sasprog=$1
+    pbsname=$(basename $sasprog .sas)
+    pbsname=${pbsname:0:15}
+    if [[ "$(basename $sasprog .sas)" = "$sasprog" ]]
+	then
+	sasprog=$sasprog.sas
+    fi
+
+# compute memsize - don't know if this is optimal
+    let sumsize=${memsize}-10
+    let sortsize=${sumsize}
+    memsize=$memsize"m"
+    sumsize=$sumsize"m"
+    sortsize=$sortsize"m"
+
+    echo '#!/bin/bash' "
+#PBS -N $pbsname
+#PBS $resources
+#PBS -j oe
+#PBS -m ae
+cd $PWD
+sas -noterminal -cpucount $cpucount -memsize $memsize -sumsize $sumsize -sortsize $sortsize $sasprog
+exitcode=\$?
+[[ \$exitcode = 1 ]] && exit 0 || exit \$exitcode
+" | qsub $PBSEXTRA
+
+

@@ -1,0 +1,11 @@
+#!/bin/bash
+if [[ ! "x$DISPLAY" = "x" ]]
+then
+Xcond=-X
+fi 
+if [[ ! -z $1 ]]
+then
+xtra="-l nodes=compute-0-$1" 
+fi
+# main call
+qsub -I $Xcond -q interactive $xtra

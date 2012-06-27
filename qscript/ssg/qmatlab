@@ -1,0 +1,50 @@
+#!/bin/bash
+if [[ -z $1 ]]
+    then
+    cat << EOF
+    $0 prog[.m] chunks
+
+    will launch Matlab under PBS-like systems.
+    It will request the entire node.
+EOF
+exit
+    fi
+chunk_default=4
+#_chunks=$2
+_chunks=$chunk_default
+
+    if [[ -z $_chunks ]]
+	then
+	chunks=0
+	cpucount=1
+    else
+	chunks=$_chunks
+	let cpucount=${chunks}*2
+    fi
+
+let memsize=${cpucount}*8192
+resources="-l ncpus=$cpucount,mem=${memsize}mb"
+    prog=$1
+    pbsname=$(basename $prog .m)
+    pbsname=${pbsname:0:15}
+    if [[ "$(basename $prog .m)" = "$prog" ]]
+	then
+	prog=$prog.m
+    fi
+    logfile=$(basename $prog .m).log
+
+# compute memsize - don't know if this is optimal
+    let memsize=${cpucount}*8192
+#
+# later, we might want to add on 
+# #PBS -l other=matlab
+# when such a resource has been defined.
+
+
+    echo '#!/bin/bash' "
+#PBS -N $pbsname
+#PBS $resources
+#PBS -j oe
+cd $PWD
+matlab -nodesktop -nosplash <  $prog > $logfile" | qsub
+

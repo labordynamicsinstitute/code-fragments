@@ -1,0 +1,94 @@
+#!/bin/bash
+if [[ -z $1 ]]
+    then
+    cat << EOF
+    $0 prog[.sas] -c(hunks) [chunks] -w(ait) [jobid] -n(ode) [nodenum]
+
+    will launch SAS under PBS-like systems, requesting [chunks] chunks
+    and adjusting SAS memsize, sortsize, and sumsize appropriately.
+
+    If not specifying [chunks], uses 1 CPU and 8GB of RAM.
+    Chunks are defined in units of 2CPUS:16GB of RAM
+
+    If these limits are insufficient, you may need to run a 
+    custom qsub job with '#PBS -l mem=XXXXmb' as one of the PBS options.
+
+    (expert usage)
+    To add additional PBS options, set a environment variable PBSEXTRA
+    with the full set of options. It will be appended to the qsub
+    command line 
+EOF
+exit
+    fi
+
+# default values
+chunks=0
+cpucount=1
+# parse command line
+while [[ ! -z $1 ]]
+do
+    case $1 in
+	-c)
+	  chunks=$2
+	  shift
+	;;
+	-w)
+	  waitid=$2
+	  shift
+	 echo " Expert feature: waiting for job $waitid"
+	;;
+	-n)
+	  node=$2
+	  shift
+	;;
+	*)
+	sasprog=$1
+	;;
+    esac
+shift
+done	
+
+if [[ $chunks -gt 0 ]] 
+then
+   # recompute cpucoung only if they are larger than 1
+	let cpucount=${chunks}*2
+fi
+
+let memsize=${cpucount}*8192
+echo " Using $chunks chunks:"
+echo "       Memsize = $memsize"
+echo "       CPUs    = $cpucount"
+
+resources="-l ncpus=$cpucount,mem=${memsize}mb"
+[[ -z $node ]] || resources="${resources},nodes=compute-0-$node" 
+
+[[ -z $node ]] || echo " Undocumented feature: launching on node $node"
+
+    pbsname=$(basename $sasprog .sas)
+    pbsname=${pbsname:0:15}
+    if [[ "$(basename $sasprog .sas)" = "$sasprog" ]]
+	then
+	sasprog=$sasprog.sas
+    fi
+
+# compute memsize - don't know if this is optimal
+    let memsize=${cpucount}*8192
+    let sumsize=${memsize}-10
+    let sortsize=${sumsize}
+    memsize=$memsize"m"
+    sumsize=$sumsize"m"
+    sortsize=$sortsize"m"
+
+    echo '#!/bin/bash' "
+#PBS -N $pbsname
+#PBS $resources
+#PBS -j oe
+#PBS -m ae
+$([[ -z $waitid ]] || echo '#PBS ' "-W depend=afterok:$waitid" )
+cd $PWD
+sas -noterminal -cpucount $cpucount -memsize $memsize -sumsize $sumsize -sortsize $sortsize $sasprog
+exitcode=\$?
+[[ \$exitcode = 1 ]] && exit 0 || exit \$exitcode
+" | qsub $PBSEXTRA
+
+

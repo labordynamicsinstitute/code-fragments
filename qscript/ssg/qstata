@@ -1,0 +1,52 @@
+#!/bin/bash
+if [[ -z $1 ]]
+    then
+    cat << EOF
+    $0 prog[.do] chunks
+
+    will launch Stata under PBS-like systems, requesting [chunks] chunks
+    and adjusting Stata memory allocation appropriately.
+
+    If not specifying [chunks], uses 1 CPU and 8GB of RAM.
+    Chunks are defined in units of 2CPUS:16GB of RAM
+EOF
+exit
+    fi
+
+    # failsafe for typical stata syntax
+    if [[ "$1" = "do" ]] 
+    then
+	shift
+    fi
+    if [[ -z $2 ]]
+	then
+	chunks=0
+	cpucount=1
+	resources="-l ncpus=1,mem=8192mb"
+    else
+	chunks=$2
+	let cpucount=${chunks}*2
+        let memsize=${cpucount}*8192
+	resources="-l ncpus=$cpucount,mem=${memsize}mb"
+    fi
+
+    prog=$1
+    pbsname=$(basename $prog .do)
+    pbsname=${pbsname:0:15}
+    if [[ "$(basename $prog .do)" = "$prog" ]]
+	then
+	prog=$prog.do
+    fi
+
+# compute memsize - don't know if this is optimal
+    let memsize=${cpucount}*8192
+
+    echo '#!/bin/bash' "
+#PBS -N $pbsname
+#PBS $resources
+#PBS -j oe
+#PBS -m ae
+umask $(umask)
+cd $PWD
+stata -q -b do $prog" | qsub
+
