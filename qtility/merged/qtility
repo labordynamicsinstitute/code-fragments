@@ -31,10 +31,16 @@
 # 2. Pass the arguments to the program-specific function
 #
 ####################################################################################
+# Initializations.
 
+# Check out how the script was called.
+script=$(basename $0)
 
+# Get argument information.
 args=$@
 argcnt=$#
+
+####################################################################################
 function print_help
 {
     cat << EOF
@@ -76,7 +82,9 @@ EOF
 
 exit 0
 }
+####################################################################################
 
+####################################################################################
 function parse_args
 {
 	set -- $args
@@ -188,7 +196,9 @@ function parse_args
 	[[ -z $sasprog && -z $cpucount ]] && print_help
 
 }
+####################################################################################
 
+####################################################################################
 function calc_params
 {
 	# Reform the program name to make sure the ".sas" extension is there.
@@ -226,7 +236,9 @@ function calc_params
     sortsize=$sortsize"m"
 
 }
+####################################################################################
 
+####################################################################################
 function verbose_print
 {
     cat <<EOF
@@ -247,7 +259,9 @@ sas command=sas -noterminal -cpucount $cpucount -memsize $memsize -sumsize $sums
 
 EOF
 }
+####################################################################################
 
+####################################################################################
 function run_program
 {
     echo '#!/bin/bash' "
@@ -259,8 +273,10 @@ function run_program
 cd $PWD
 sas -noterminal -cpucount $cpucount -memsize $memsize -sumsize $sumsize -sortsize $sortsize $extras $sasprog" | qsub
 }
+####################################################################################
 
 
+####################################################################################
 #------ Run Main Program ------
 parse_args
 calc_params
