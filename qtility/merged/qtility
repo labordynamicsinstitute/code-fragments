@@ -1,5 +1,38 @@
 #!/bin/bash
 
+####################################################################################
+# Note to future generations/programmers:
+#
+# The qtility script was designed for use on a number of the Census Bureau's 
+# research computers. It implements easy access points for users to run standard
+# processing tools within the PBS Pro queueing system. Primarily this is meant
+# for the majority of users who want to "just run my SAS program" or whatever.
+# This is not going to be all that useful for a small set of expert PBS Pro users
+# who need very specific tweaks for their programs to run. Some of the most basic
+# and useful PBS options will be implemented here. And others can be added in the
+# future as needed.
+#
+# A few requirements:
+# - Calling qtility will be done with links. So, for example, we'll have:
+#   qstata -> qtility, or
+#   qR -> qtility, and the main qtility script will figure how it was called and how
+#   it should work based on that.
+# - For the most basic operations, the q script should be fully subtitutable for the
+#   the original program call (i.e. "sas myprogram.sas" can be replace with
+#   "qsas myprogram.sas"). Kind of a "simple mode".
+# - Some PBS- and program-specific options can be accessed with double-dash command
+#   line options in a sort of "advanced mode".
+# - Changes to the core qtility script should not - in general - change the way 
+#   currently implemented scripts work.
+#
+#
+# The overall architecture of the script is as follows:
+# 1. The called script name is determined (qsas, qR, qstata, etc.)
+# 2. Pass the arguments to the program-specific function
+#
+####################################################################################
+
+
 args=$@
 argcnt=$#
 function print_help
