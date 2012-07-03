@@ -1,0 +1,30 @@
+#!/bin/bash
+
+thisprog=$(basename $0)
+
+case $thisprog in
+	qsas2)
+	 	echo "Called with qsas2!"
+		;;
+	qstata2)
+		echo "Called with qstata2!"
+		;;
+	qR2)
+		echo "Called with qR2!"
+		;;
+	qgauss2)
+		echo "Called with qgauss2!"
+		;;
+	qmatlab2)
+		echo "Called with qmatlab2!"
+		;;
+	qscript)
+		echo "Called with qscript :("
+		;;
+	*)
+		echo "WHOA! No idea how we got here..."
+		;;
+esac
+
+
+
