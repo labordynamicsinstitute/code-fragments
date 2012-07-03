@@ -179,10 +179,10 @@ function calc_params
     [[ -z $mailops ]] && mailops=n
 	resources="-l ncpus=$cpucount,mem=${memsize}mb"
 
-	# Cpucount needs to be less than 24.
-    if [[ cpucount -gt 24 ]]
+	# Cpucount needs to be less than 16.
+    if [[ cpucount -gt 16 ]]
     then
-		echo "The number of CPUs (chunks) cannot be larger than 24."
+		echo "The number of CPUs (chunks) cannot be larger than 16."
 		echo "You entered: chunks/cpucount=$cpucount"
 		exit 2
     fi
@@ -233,3 +233,4 @@ parse_args
 calc_params
 [[ -z $verbose ]] || verbose_print
 [[ -z $debug ]] && run_program
+
