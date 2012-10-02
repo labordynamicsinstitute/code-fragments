@@ -1,8 +1,6 @@
 #!/bin/bash
 pkglist=pkglist.CAC.txt
 outfile=build-R-CAC.R
-CRANURL=http://www.vrdc.cornell.edu/CRAN/src/contrib
-lib=$HOME/build/R
 . config.sh
 
 

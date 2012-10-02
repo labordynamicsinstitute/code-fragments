@@ -1,8 +1,6 @@
 #!/bin/bash
 pkglist=pkglist.SSG.txt
 outfile=build-R-SSG.R
-CRANURL=http://www.vrdc.cornell.edu/CRAN/src/contrib
-version=2.14.0
 wd=$(pwd)
 . config.sh
 
