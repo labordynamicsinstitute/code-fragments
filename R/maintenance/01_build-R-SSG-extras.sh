@@ -4,6 +4,7 @@ outfile=build-R-SSG-extras.R
 CRANURL=http://www.vrdc.cornell.edu/CRAN/src/contrib
 BIOURL=http://www.bioconductor.org/biocLite.R
 . config.sh
+[[ -d $lib ]] || mkdir -p $lib
 
 printf "%20s" "pkgs <- c(" > $outfile
 cat $pkglist |\
