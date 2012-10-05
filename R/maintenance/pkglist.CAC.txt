@@ -67,6 +67,7 @@ hexbin
 Hmisc
 HSAUR
 ineq
+inline
 ipred
 iterators
 itertools

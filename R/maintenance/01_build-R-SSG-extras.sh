@@ -23,6 +23,7 @@ echo "   $Rbin CMD BATCH $outfile"
 echo " Press CTRL-C to interrupt within the next 5 seconds"
 sleep 5
 echo " Running "
+export R_LIBS_SITE=$lib
 $Rbin CMD BATCH $outfile
 cat ${outfile}out
 

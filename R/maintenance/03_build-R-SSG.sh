@@ -19,6 +19,13 @@ count=$(cat $pkglist| wc -l)
 echo "install.packages(pkgs, contriburl='$CRANURL', lib='$lib')">> $outfile 
 echo "warnings()" >> $outfile
 
+# adding lines for rstan
+#echo "library(inline)" >> $outfile
+#echo "library(Rcpp)" >> $outfile
+#echo "library(RcppEigen)" >> $outfile
+#echo "options(repos = c(getOption('repos'), rstan = 'http://wiki.stan.googlecode.com/git/R'))
+#install.packages('rstan', type = 'source') " >> $outfile
+
 # now we run it
 echo "We will now run the progrom to create $count CRAN packages"
 echo "   $Rbin CMD BATCH $outfile" 
@@ -42,7 +49,7 @@ done
 
 echo " Verify remove-core.sh, then"
 echo " do" 
-echo " (cd $lib/..; tar czvf ${wd}/R-packages-SSG-$version.tgz library/)"
+echo " (cd $lib/..; tar cjvf ${wd}/R-${version}-mkl-ssg.tar.bz2 library/)"
 
 
 
