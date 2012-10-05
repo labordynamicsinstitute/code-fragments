@@ -30,7 +30,6 @@ DBI
 degreenet
 delt
 denpro
-Design
 digest
 doBy
 doMC
@@ -47,7 +46,6 @@ evd
 fBasics
 fdrtool
 feature
-fEcofin
 filehash
 flexmix
 foreach
@@ -68,7 +66,6 @@ hdf5
 hexbin
 Hmisc
 HSAUR
-impute
 ineq
 ipred
 iterators
@@ -138,7 +135,6 @@ Rglpk
 rlecuyer
 rmeta
 R.methodsS3
-Rmpi
 robustbase
 ROCR
 rpanel
@@ -183,7 +179,6 @@ truncreg
 trust
 TTR
 tweedie
-Umacs
 urca
 vcd
 VGAM
