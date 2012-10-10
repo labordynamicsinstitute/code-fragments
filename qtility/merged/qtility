@@ -40,6 +40,8 @@ script=$(basename $0)
 args=$@
 argcnt=$#
 
+# Set the initial error condition.
+err=false
 ####################################################################################
 function print_help
 {
@@ -85,7 +87,70 @@ exit 0
 ####################################################################################
 
 ####################################################################################
-function parse_args
+# This function determines how the script what called. Later this will help us 
+# understand how to parse the rest of the command string.
+#
+# Any option that appears here must have a complete function handler, which consists
+# of the following:
+# - OPT_help
+# - OPT_parse_args
+# - OPT_check_args
+# - OPT_submit
+#
+function parse_script_call
+{
+	thisprog=$(basename $0)
+
+	case $thisprog in
+        qsas2)
+			OPT=qsas
+			echo "Called with qsas2!"
+			;;
+        qstata2)
+			OPT=qstata
+			echo "Called with qstata2!"
+            ;;
+        qR2)
+			OPT=qR
+            echo "Called with qR2!"
+            ;;
+        qgauss2)
+			OPT=qgauss
+            echo "Called with qgauss2!"
+            ;;
+        qmatlab2)
+			OPT=qmatlab
+            echo "Called with qmatlab2!"
+            ;;
+        qtility)
+			OPT=
+            echo "Called with qtility :("
+            ;;
+        *)
+			OPT=
+            echo "WHOA! No idea how we got here..."
+            ;;
+	esac
+}
+####################################################################################
+
+####################################################################################
+# This function pulls out the general arguments that are needed by PBS Pro and which
+# should be standard across all the different options. All other arguments should be
+# passed to the option specific parser.
+#
+# The general arguments that need to be parsed are:
+# - pbsname
+# - mailto
+# - mailops
+# - resources (memsize cpucount)
+# - memsize
+# - cpucount
+# - verbose
+# - debug
+# - quiet
+#
+function parse_general_args
 {
 	set -- $args
 	[[ $# = 0 ]] && print_help
@@ -98,24 +163,15 @@ function parse_args
 			;;
 		*)
 			positional=yes
-			[[ -z $1 ]] || sasprog=$1
-			[[ -z $2 ]] || cpucount=$2
-			if [[ $# -gt 2 ]]
-			then
-			    echo "Warning: Too many positional parameters."
-			    print_help
-			fi
-			quiet=no
+			${OPT}_parse_args positional
 			;;
 	esac
 	[[ $positional = yes ]] && return
 
+	remaining_args=
 	while [[ ! -z $1 ]]
 	do
 		case $1 in
-			--sasprog*)
-				sasprog=${1##*=}
-				;;
 			--chunks*)
 				cpucount=${1##*=}
 				;;
@@ -134,36 +190,6 @@ function parse_args
 				    echo "Warning: memsize not allowed to be greater than 80 GB. Resetting to 80000MB."
 				    memsize=80000
 				fi
-				;;
-			--sortsize*)
-				sortsize=${1##*=}
-				if [[ $sortsize -ge $memsize ]]
-				then
-				    echo "Warning: sortsize (${sortsize}) must be less than memsize (${memsize})."
-				    echo "Resetting sortsize to be 10MB less than memsize."
-				    sortsize=
-				fi
-				;;
-			--sumsize*)
-				sumsize=${1##*=}
-				if [[ $sumsize -ge $memsize ]]
-				then
-				    echo "Warning: sumsize (${sumsize}) must be less than memsize (${memsize})."
-				    echo "Resetting sumsize to be 10MB less than memsize."
-				    sumsize=
-				fi
-				;;
-			--altlog*)
-				altlog=${1##*=}
-	    		# check for fullpath here
-				if [[ "$(dirname $altlog)" = "." ]]
-				then
-					altlog=$(pwd)/$(basename $altlog)
-				fi
-#				if [[ "${altlog:0:1}" -ne "/" ]]
-#				then
-#					altlog=$(pwd)/$altlog
-#				fi
 				;;
 			--pbsname*)
 				pbsname=${1##*=}
@@ -185,15 +211,85 @@ function parse_args
 			--quiet*)
 				quiet=yes
 				;;
+			--*)
+				# Found option-specific positional parameter. Passing it on.
+				remaining_args=$remaining_args $1
+				;;
 			*)
-				echo "Oops. Unknown parameter. Check your command line"
-				echo "$*"
-				exit 2
+				echo "Oops. Bad parameter structure. Optional parameters require a leading '--'. Check your command line"
+				echo "Your poorly structured parameter was: $1"
+				err=true
 				;;
 		esac
 		shift
 	done
 	[[ -z $sasprog && -z $cpucount ]] && print_help
+	${OPT}_parse_args optional
+
+}
+####################################################################################
+
+####################################################################################
+function qsas_parse_args
+{
+	case $1 in
+		--positional)
+			set -- $args
+			[[ -z $1 ]] || sasprog=$1
+			[[ -z $2 ]] || cpucount=$2
+			if [[ $# -gt 2 ]]
+			then
+			    echo "Warning: Too many positional parameters."
+			    print_help
+			fi
+			quiet=no
+			;;
+		--optional)
+			set -- $remaining_args
+			while [[ ! -z $1 ]]
+			do
+				case $1 in
+					--sasprog*)
+						sasprog=${1##*=}
+						;;
+					--sortsize*)
+						sortsize=${1##*=}
+						if [[ $sortsize -ge $memsize ]]
+						then
+							echo "Warning: sortsize (${sortsize}) must be less than memsize (${memsize})."
+							echo "Resetting sortsize to be 10MB less than memsize."
+							sortsize=
+						fi
+						;;
+					--sumsize*)
+						sumsize=${1##*=}
+						if [[ $sumsize -ge $memsize ]]
+						then
+							echo "Warning: sumsize (${sumsize}) must be less than memsize (${memsize})."
+							echo "Resetting sumsize to be 10MB less than memsize."
+							sumsize=
+						fi
+						;;
+					--altlog*)
+						altlog=${1##*=}
+	    				# check for fullpath here
+						if [[ "$(dirname $altlog)" = "." ]]
+						then
+							altlog=$(pwd)/$(basename $altlog)
+						fi
+						;;
+					*)
+						echo "Oops. Unknown parameter. Check your command line"
+						echo "$*"
+						exit 2
+						;;
+				esac
+				shift
+			done
+
+			;;
+	esac
+
 
 }
 ####################################################################################
@@ -278,8 +374,9 @@ sas -noterminal -cpucount $cpucount -memsize $memsize -sumsize $sumsize -sortsiz
 
 ####################################################################################
 #------ Run Main Program ------
+parse_script_call
 parse_args
 calc_params
 [[ -z $verbose ]] || verbose_print
-[[ -z $debug ]] && run_program
+#[[ -z $debug ]] && run_program
 
