@@ -27,9 +27,28 @@
 #
 #
 # The overall architecture of the script is as follows:
-# 1. The called script name is determined (qsas, qR, qstata, etc.)
-# 2. Pass the arguments to the program-specific function
+# 1. Parse the script name so we know how to handle program-specific stuff.
+# 2. Parse the general arguments.
+# 2a. Parse the program-specific arguments.
+# 3. Check the general arguments for consistency and complete them if necessary.
+# 3b. Check the program-specific arguments.
+# 4. If requested, print all the checked/completed parameters.
+# 5. If not in debug mode, submit the program-specific job.
 #
+#
+# To Do:
+# 1. Finish implementing err flag. In general err should be set to true when there
+#    is a problem. This should trigger a somewhat graceful exit at a later point.
+# 2. Implement qstata
+# 3. Implement qR
+# 4. Implement qgauss
+# 5. Implement qmatlab
+#
+# NOTE: To prevent confusion with currently implemented scripts, this program expects
+# to be called with scripts that have a "2" suffixed on to the standard script names.
+# So for example, since qsas is being actively used, this script should be called
+# with qsas2. When this script is ready to go to production, this can be fixed by
+# altering the parse_script_call function.
 ####################################################################################
 # Initializations.
 
@@ -42,29 +61,23 @@ argcnt=$#
 
 # Set the initial error condition.
 err=false
+
+# Temporary variables for debugging.
+verbose=yes
 ####################################################################################
 function print_help
 {
+	${OPT}_help head
     cat << EOF
-Usage: qsas prog[.sas] [CHUNKS/CPUCOUNT]
-       qsas --sasprog=prog[.sas] [OPTION]... 
-Launch SAS under PBS-like systems and allow adjustment of SAS command-line parameters.
-Setting the sasprog is mandatory, all other parameters are optional.
-Currently sets memsize, sortsize, and sumsize automatically. When specifying the number
-of chunks/cpucount, these variables will be set as follows unless overridden in the options:
-    memsize = chunks * 5000MB
-    sortsize = memsize - 10MB
-    sumsize = memsize - 10MB
 By default the number of chunks/cpucount is 1.
 
 Options:
-    --sasprog=FILE        Run FILE in a PBS-like system. '.sas' extension need not be specified.
+EOF
+	${OPT}_help opts
+	cat << EOF
     --chunks=NUM,
     --cpucount=NUM        Use NUM chunks/CPUs to process the SAS program.
     --memsize=NUM         Set the SAS memsize as NUM megabytes.
-    --sortsize=NUM        Set the SAS sortsize as NUM megabytes. sortsize may not be larger than memsize.
-    --sumsize=NUM         Set the SAS sumzie as NUM megabytes. sumsize may not be larger than memsize.
-    --altlog=FILE         Set the SAS altlog to be FILE. No error checking is done on the file or location.
     --pbsname=LABEL       Set the name of the job for entering in the PBS queue. The standard is to
                           use the first 15 digits of the program name.
     --mailops=OPS         Set the PBSPro events for which emails should be sent. The --mailto option must be set
@@ -77,12 +90,11 @@ Options:
     --debug               Turn on debug. All code will run except that the job will not be placed in the PBS
                           queue. Also, running in debug mode will set the verbose flag as well.
 
-Written by Rob Creecy
-Modified by Matthew Graham
-Report bugs to <matthew.graham@census.gov>.
+Based on code by Rob Creecy
+General qtility code written by Matthew Graham
 EOF
-
-exit 0
+	${OPT}_help tail
+	exit 0
 }
 ####################################################################################
 
@@ -95,6 +107,7 @@ exit 0
 # - OPT_help
 # - OPT_parse_args
 # - OPT_check_args
+# - OPT_verbose_print
 # - OPT_submit
 #
 function parse_script_call
@@ -150,7 +163,7 @@ function parse_script_call
 # - debug
 # - quiet
 #
-function parse_general_args
+function parse_args
 {
 	set -- $args
 	[[ $# = 0 ]] && print_help
@@ -179,16 +192,16 @@ function parse_general_args
 				cpucount=${1##*=}
 				;;
 			--memsize*)
-				memsize=${1##*=}
-				if [[ $memsize -lt 20 ]]
+				rawmemsize=${1##*=}
+				if [[ $rawmemsize -lt 20 ]]
 				then
 				    echo "Warning: memsize not allowed to be less than 20 (MB). Resetting to 20MB."
-				    memsize=20
+				    rawmemsize=20
 				fi
-				if [[ $memsize -gt 80000 ]]
+				if [[ $rawmemsize -gt 80000 ]]
 				then
 				    echo "Warning: memsize not allowed to be greater than 80 GB. Resetting to 80000MB."
-				    memsize=80000
+				    rawmemsize=80000
 				fi
 				;;
 			--pbsname*)
@@ -213,7 +226,7 @@ function parse_general_args
 				;;
 			--*)
 				# Found option-specific positional parameter. Passing it on.
-				remaining_args=$remaining_args $1
+				remaining_args="$remaining_args $1"
 				;;
 			*)
 				echo "Oops. Bad parameter structure. Optional parameters require a leading '--'. Check your command line"
@@ -224,95 +237,17 @@ function parse_general_args
 		shift
 	done
 	[[ -z $sasprog && -z $cpucount ]] && print_help
-	${OPT}_parse_args optional
+	${OPT}_parse_args optional $remaining_args
 
 }
 ####################################################################################
 
 ####################################################################################
-function qsas_parse_args
+function check_args
 {
-	case $1 in
-		--positional)
-			set -- $args
-			[[ -z $1 ]] || sasprog=$1
-			[[ -z $2 ]] || cpucount=$2
-			if [[ $# -gt 2 ]]
-			then
-			    echo "Warning: Too many positional parameters."
-			    print_help
-			fi
-			quiet=no
-			;;
-		--optional)
-			set -- $remaining_args
-			while [[ ! -z $1 ]]
-			do
-				case $1 in
-					--sasprog*)
-						sasprog=${1##*=}
-						;;
-					--sortsize*)
-						sortsize=${1##*=}
-						if [[ $sortsize -ge $memsize ]]
-						then
-							echo "Warning: sortsize (${sortsize}) must be less than memsize (${memsize})."
-							echo "Resetting sortsize to be 10MB less than memsize."
-							sortsize=
-						fi
-						;;
-					--sumsize*)
-						sumsize=${1##*=}
-						if [[ $sumsize -ge $memsize ]]
-						then
-							echo "Warning: sumsize (${sumsize}) must be less than memsize (${memsize})."
-							echo "Resetting sumsize to be 10MB less than memsize."
-							sumsize=
-						fi
-						;;
-					--altlog*)
-						altlog=${1##*=}
-	    				# check for fullpath here
-						if [[ "$(dirname $altlog)" = "." ]]
-						then
-							altlog=$(pwd)/$(basename $altlog)
-						fi
-						;;
-					*)
-						echo "Oops. Unknown parameter. Check your command line"
-						echo "$*"
-						exit 2
-						;;
-				esac
-				shift
-			done
-
-			;;
-	esac
-
-
-}
-####################################################################################
-
-####################################################################################
-function calc_params
-{
-	# Reform the program name to make sure the ".sas" extension is there.
-	baseprog=$(basename $sasprog .sas)
-	sasprog=$(dirname $sasprog)/$baseprog.sas
-
-   	# If current directory is referenced, change to full path.
-	# All other relative directory references will be left intact.
-	if [[ "$(dirname $sasprog)" = "." ]]
-	then
-		sasprog=$(pwd)/$(basename $sasprog)
-	fi
-
+	# Checking general arguments
 	[[ -z $cpucount ]] && cpucount=1
-	[[ -z $memsize ]] && memsize=$(( ${cpucount}*5000 ))
-	[[ -z $sumsize ]] && sumsize=$(( ${memsize}-10 ))
-	[[ -z $sortsize ]] && sortsize=$(( ${memsize}-10 ))
-	[[ -z $altlog ]] || extras="-altlog ${altlog}"
+	[[ -z $rawmemsize ]] && rawmemsize=$(( ${cpucount}*5000 ))
     [[ -z $pbsname ]] && pbsname=${baseprog:0:15}
     [[ -z $mailto ]] && mailto=$USER
     [[ -z $mailops ]] && mailops=n
@@ -327,15 +262,141 @@ function calc_params
     fi
 
 	# These variables need special formatting after getting their values.
-    memsize=$memsize"m"
-    sumsize=$sumsize"m"
-    sortsize=$sortsize"m"
+    memsize=$rawmemsize"m"
+
+	# Call program-specific argument parser.
+	${OPT}_check_args
+}
+####################################################################################
+
+####################################################################################
+function qsas_help
+{
+	case $1 in
+		head)
+			cat << EOF
+Usage: qsas prog[.sas] [CHUNKS/CPUCOUNT]
+       qsas --sasprog=prog[.sas] [OPTION]... 
+Launch SAS under PBS-like systems and allow adjustment of SAS command-line parameters.
+Setting the sasprog is mandatory, all other parameters are optional.
+Currently sets memsize, sortsize, and sumsize automatically. When specifying the number
+of chunks/cpucount, these variables will be set as follows unless overridden in the options:
+    memsize = chunks * 5000MB
+    sortsize = memsize - 10MB
+    sumsize = memsize - 10MB
+EOF
+			;;	
+		opts)
+			cat << EOF
+    --sasprog=FILE        Run FILE in a PBS-like system. '.sas' extension need not be specified.
+    --sortsize=NUM        Set the SAS sortsize as NUM megabytes. sortsize may not be larger than memsize.
+    --sumsize=NUM         Set the SAS sumzie as NUM megabytes. sumsize may not be larger than memsize.
+    --altlog=FILE         Set the SAS altlog to be FILE. No error checking is done on the file or location.
+EOF
+			;;	
+		tail)
+			cat << EOF
+SAS-specific handler written by Matthew Graham
+Report bugs to <matthew.graham@census.gov>.
+EOF
+			;;	
+	esac	
+}
+####################################################################################
+
+####################################################################################
+function qsas_parse_args
+{
+	case $1 in
+		positional)
+			set -- $args
+			[[ -z $1 ]] || sasprog=$1
+			[[ -z $2 ]] || cpucount=$2
+			if [[ $# -gt 2 ]]
+			then
+			    echo "Warning: Too many positional parameters."
+			    print_help
+			fi
+			quiet=no
+			;;
+		optional)
+			shift
+			while [[ ! -z $1 ]]
+			do
+				case $1 in
+					#vvvvvvvvvvv MODIFY SAS OPTIONS BELOW HERE vvvvvvvvvvv
+					--sasprog*)
+						sasprog=${1##*=}
+						;;
+					--sortsize*)
+						sortsize=${1##*=}
+						if [[ $sortsize -ge $rawmemsize ]]
+						then
+							echo "Warning: sortsize (${sortsize}) must be less than memsize (${rawmemsize})."
+							echo "Resetting sortsize to be 10MB less than memsize."
+							sortsize=
+						fi
+						;;
+					--sumsize*)
+						sumsize=${1##*=}
+						if [[ $sumsize -ge $rawmemsize ]]
+						then
+							echo "Warning: sumsize (${sumsize}) must be less than memsize (${rawmemsize})."
+							echo "Resetting sumsize to be 10MB less than memsize."
+							sumsize=
+						fi
+						;;
+					--altlog*)
+						altlog=${1##*=}
+	    				# check for fullpath here
+						if [[ "$(dirname $altlog)" = "." ]]
+						then
+							altlog=$(pwd)/$(basename $altlog)
+						fi
+						;;
+					#^^^^^^^^^^ MODIFY SAS OPTIONS ABOVE HERE ^^^^^^^^^^
+					*)
+						echo "Oops. Your parameter was unknown by the general parser and by the SAS parser. Check your command line"
+						echo "Your bad parameter was: $*"
+						err=true
+						;;
+				esac
+				shift
+			done
+
+			;;
+	esac
+
 
 }
 ####################################################################################
 
 ####################################################################################
-function verbose_print
+function qsas_check_args
+{
+	# Reform the program name to make sure the ".sas" extension is there.
+	baseprog=$(basename $sasprog .sas)
+	sasprog=$(dirname $sasprog)/$baseprog.sas
+
+   	# If current directory is referenced, change to full path.
+	# All other relative directory references will be left intact.
+	if [[ "$(dirname $sasprog)" = "." ]]
+	then
+		sasprog=$(pwd)/$(basename $sasprog)
+	fi
+
+	[[ -z $sumsize ]] && sumsize=$(( ${rawmemsize}-10 ))
+	[[ -z $sortsize ]] && sortsize=$(( ${rawmemsize}-10 ))
+	[[ -z $altlog ]] || extras="-altlog ${altlog}"
+
+	# These variables need special formatting after getting their values.
+    sumsize=$sumsize"m"
+    sortsize=$sortsize"m"
+}
+####################################################################################
+
+####################################################################################
+function qsas_verbose_print
 {
     cat <<EOF
 Verbose Mode On
@@ -358,7 +419,7 @@ EOF
 ####################################################################################
 
 ####################################################################################
-function run_program
+function qsas_submit
 {
     echo '#!/bin/bash' "
 #PBS -N $pbsname
@@ -376,7 +437,7 @@ sas -noterminal -cpucount $cpucount -memsize $memsize -sumsize $sumsize -sortsiz
 #------ Run Main Program ------
 parse_script_call
 parse_args
-calc_params
-[[ -z $verbose ]] || verbose_print
-#[[ -z $debug ]] && run_program
+check_args
+[[ -z $verbose ]] || ${OPT}_verbose_print
+#[[ -z $debug ]] && ${OPT}_submit
 
