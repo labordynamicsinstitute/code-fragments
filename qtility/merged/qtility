@@ -99,10 +99,12 @@ Options:
 EOF
 	cat << EOF
     --program=FILE        Run FILE using $SOFTWARE in a PBS-like system.
-    --logfile=FILE        Name of the log file. If not specified, it will be the default: FILE.${deflogext}.
     --chunks=NUM,
     --cpucount=NUM        Use NUM chunks/CPUs to process the program. Default: ${cpudef}. Max: $cpumax
     --memsize=NUM         Set the memsize as NUM megabytes. Default: $memdef per CPU. Max: $memmax
+    --queue=QUEUE         Specifies which PBS queue to use.  When unspecified, the job will be sent to
+                          the queue indicated by the environment variable DEFAULT_PBS_QUEUE (if set),
+                          otherwise it will be sent to the default queue.
     --pbsname=LABEL       Set the name of the job for entering in the PBS queue. The standard is to
                           use the first 15 digits of the program name.
     --mailops=OPS         Set the PBSPro events for which emails should be sent. The --mailto option must be set
@@ -174,7 +176,8 @@ function parse_script_call
 	esac
 
 # define the plugin to use
-plugin=$(dirname $(readlink -f $0))/qtility.$OPT
+plugindir=$(dirname $(readlink -f $0))
+plugin=$plugindir/qtility.$OPT
 if [[ -f $plugin ]]
 then
 	echo "Using plugin for $OPT ... found."
@@ -242,9 +245,12 @@ function parse_args
 			--pbsname*)
 				pbsname=${1##*=}
 				;;
+			--queue*)
+                                queue=${1##*=}
+                                ;;
 			--mailops*)
 				mailops=${1##*=}
-				;;
+				;; 
 			--mailto*)
 				mailto=${1##*=}
 				;;
@@ -285,10 +291,17 @@ function parse_args
 function check_args
 {
 	# Checking general arguments
+	baseprog=$(basename $program)
+	programdir=$(dirname $(readlink -f $program))
+	program=$programdir/$baseprog
+	
+
     [[ -z $pbsname ]] && pbsname=${baseprog:0:15}
     [[ -z $mailto ]] && mailto=$USER
     [[ -z $mailops ]] && mailops=n
-    [[ -z $logfile ]] && logfile=${program}.${deflogext}
+
+        [[ -z $queue ]] && queue=$DEFAULT_PBS_QUEUE
+        [[ -z $queue ]] || destination="$extras -q ${queue}"
 
         # Check cpucount, and put it in range: cpumin .le. cpucount .le. cpumax
 	[[ -z $cpucount ]] && cpucount=$cpudef
@@ -347,5 +360,5 @@ parse_script_call
 parse_args
 check_args
 [[ -z $verbose ]] || ${OPT}_verbose_print
-${OPT}_submit | $qsub
+${OPT}_submit | $qsub $destination
 

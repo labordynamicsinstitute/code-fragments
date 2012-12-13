@@ -147,13 +147,6 @@ function qsas_check_args
 	baseprog=$(basename $sasprog .sas)
 	sasprog=$(dirname $sasprog)/$baseprog.sas
 
-   	# If current directory is referenced, change to full path.
-	# All other relative directory references will be left intact.
-	if [[ "$(dirname $sasprog)" = "." ]]
-	then
-		sasprog=$(pwd)/$(basename $sasprog)
-	fi
-
 	[[ -z $sumsize ]] && sumsize=$(( ${rawmemsize}-10 ))
 	[[ -z $sortsize ]] && sortsize=$(( ${rawmemsize}-10 ))
 	[[ -z $altlog ]] || extras="-altlog ${altlog}"
@@ -198,7 +191,7 @@ function qsas_submit
 #PBS -m $mailops
 #PBS $resources
 #PBS -j oe
-cd $PWD
+cd $programdir
 sas -noterminal -cpucount $cpucount -memsize $memsize -sumsize $sumsize -sortsize $sortsize $extras $sasprog" 
 }
 ####################################################################################

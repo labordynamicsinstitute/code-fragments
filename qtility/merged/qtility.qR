@@ -1,0 +1,113 @@
+#!/bin/bash
+
+####################################################################################
+# Note to future generations/programmers:
+#
+# The qtility script was designed for use on a number of the Census Bureau's 
+# research computers. It implements easy access points for users to run standard
+# processing tools within the PBS Pro queueing system. Primarily this is meant
+# for the majority of users who want to "just run my SAS program" or whatever.
+# This is not going to be all that useful for a small set of expert PBS Pro users
+# who need very specific tweaks for their programs to run. Some of the most basic
+# and useful PBS options will be implemented here. And others can be added in the
+# future as needed.
+#
+# This fragment is a template for the program-specific implementations for qtility
+# It is not designed to be run separately, but rather to be included in the general qtility
+# It is based on Matt's SAS plugin, and most of the SAS specific code is left here, rather
+# than a more formal specification. Most folks should be able to adapt this well.
+# 
+# VERY IMPORTANT
+# This plugin should ONLY define functions, using the SAME short name
+#    qtemplate -> qsas,qstata, etc.
+# with which it is to be called, and saved as qtility.(shortname)
+#
+####################################################################################
+
+SOFTWARE=R
+deflogext=Rout
+
+####################################################################################
+function qR_help
+{
+	case $1 in
+		head)
+			cat << EOF
+EOF
+			;;
+		opts)
+			cat << EOF
+    --logfile=FILE        Name of the log file. If not specified, it will be the default: FILE.${deflogext}.
+EOF
+			;;
+		tail)
+			cat << EOF
+$SOFTWARE-specific handler written by Chad Russell, modified by Lars Vilhuber
+Report bugs to <chad.russell@census.gov>.
+EOF
+			;;	
+	esac	
+}
+####################################################################################
+
+####################################################################################
+function qR_parse_args
+{
+	case $1 in
+		positional)
+			# nothing here for R
+			;;
+		optional)
+			# nothing here for R
+			;;
+	esac
+
+
+}
+####################################################################################
+
+####################################################################################
+function qR_check_args
+{
+        [[ -z $logfile ]] || extras=" ${logfile}"
+}
+####################################################################################
+
+####################################################################################
+function qR_verbose_print
+{
+    cat <<EOF
+Verbose Mode On
+
+PARAMETERS:
+program=$program 
+logfile=$logfile
+extras=$extras
+cpus=$cpucount 
+memsize=$memsize 
+pbsname=$pbsname 
+mailto=$mailto
+mailops=$mailops
+queue=$queue
+destination=$destination
+resources=$resources
+R command=R CMD BATCH $program $extras
+
+EOF
+}
+####################################################################################
+
+####################################################################################
+function qR_submit
+{
+    echo '#!/bin/bash' "
+#PBS -N $pbsname
+#PBS -M $mailto
+#PBS -m $mailops
+#PBS $resources
+#PBS -j oe
+cd $PWD
+R CMD BATCH $program $extras" 
+}
+####################################################################################
+
