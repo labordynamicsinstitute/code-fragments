@@ -24,15 +24,14 @@
 #
 ####################################################################################
 
+SOFTWARE=SOFTWARE
+
 ####################################################################################
 function qtemplate_help
 {
 	case $1 in
 		head)
 			cat << EOF
-Usage: qtemplate prog[.EXT] [CHUNKS/CPUCOUNT]
-       qtemplate --qtemplateprog=prog[.EXT] [OPTION]... 
-Launch qtemplate under PBS-like systems and allow adjustment of qtemplate command-line parameters.
 Currently sets memsize, sortsize, and sumsize automatically. When specifying the number
 of chunks/cpucount, these variables will be set as follows unless overridden in the options:
     memsize = chunks * 5000MB
@@ -42,7 +41,7 @@ EOF
 			;;	
 		opts)
 			cat << EOF
-    --sasprog=FILE        Run FILE in a PBS-like system. '.sas' extension need not be specified.
+    --sasprog=FILE        Run FILE in a PBS-like system. '.sas' extension need not be specified. (synonym for --program)
     --sortsize=NUM        Set the SAS sortsize as NUM megabytes. sortsize may not be larger than memsize.
     --sumsize=NUM         Set the SAS sumzie as NUM megabytes. sumsize may not be larger than memsize.
     --altlog=FILE         Set the SAS altlog to be FILE. No error checking is done on the file or location.
@@ -50,7 +49,7 @@ EOF
 			;;	
 		tail)
 			cat << EOF
-SAS-specific handler written by Matthew Graham
+$SOFTWARE-specific handler written by Matthew Graham
 Report bugs to <matthew.graham@census.gov>.
 EOF
 			;;	

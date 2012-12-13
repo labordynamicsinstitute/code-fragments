@@ -38,16 +38,15 @@
 # This fragment is a template for the program-specific implementations for qtility
 # It is not designed to be run separately, but rather to be included in the general qtility
 ####################################################################################
+
+SOFTWARE=SAS
+
 ####################################################################################
 function qsas_help
 {
 	case $1 in
 		head)
 			cat << EOF
-Usage: qsas prog[.sas] [CHUNKS/CPUCOUNT]
-       qsas --sasprog=prog[.sas] [OPTION]... 
-Launch SAS under PBS-like systems and allow adjustment of SAS command-line parameters.
-Setting the sasprog is mandatory, all other parameters are optional.
 Currently sets memsize, sortsize, and sumsize automatically. When specifying the number
 of chunks/cpucount, these variables will be set as follows unless overridden in the options:
     memsize = chunks * 5000MB

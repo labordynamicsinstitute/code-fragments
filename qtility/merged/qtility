@@ -82,13 +82,21 @@ qsub=qsub
 ####################################################################################
 function print_help
 {
+    cat << EOF
+
+
+Usage: $thisprog prog[.${EXT:-EXT}] [CHUNKS/CPUCOUNT]
+       $thisprog --program=prog[.${EXT:-EXT}] [OPTION]... 
+
+Launch $SOFTWARE under PBS-like systems and allow adjustment of $SOFTWARE command-line parameters.
+Setting the program name is mandatory, all other parameters are optional.
+EOF
 	${OPT}_help head
     cat << EOF
-By default the number of chunks/cpucount is 1.
+By default the number of chunks/cpucount is $cpudef.
 
 Options:
 EOF
-	${OPT}_help opts
 	cat << EOF
     --program=FILE        Run FILE using $SOFTWARE in a PBS-like system.
     --logfile=FILE        Name of the log file. If not specified, it will be the default: FILE.${deflogext}.
@@ -103,6 +111,12 @@ EOF
                           e=Send mail when job terminates. a, b, and e, can be used in combination.
     --mailto=ADDR         Send PBSPro event emails to ADDR, which should be in the form of USER@SERVER. Use
                           the --mailops option to set which event emails should be sent.
+${SOFTWARE}-specific parameters:
+EOF
+	${OPT}_help opts
+    cat << EOF
+
+Advanced parameters:
     --verbose             Turn on verbose mode. Prints all settings prior to running job.
     --force               Ignore most warnings that lead to job abortion and proceed anyway. USE WITH CAUTION!
     --debug               Turn on debug. All code will run except that the job will not be placed in the PBS
