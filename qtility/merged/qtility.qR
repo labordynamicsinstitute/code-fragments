@@ -182,7 +182,7 @@ function qtemplate_submit
 #PBS $resources
 #PBS -j oe
 cd $PWD
-sas -noterminal -cpucount $cpucount -memsize $memsize -sumsize $sumsize -sortsize $sortsize $extras $sasprog" 
+sas -noterminal -cpucount $cpucount -memsize $memsize -sumsize $sumsize -sortsize $sortsize $extras $sasprog" | qsub
 }
 ####################################################################################
 

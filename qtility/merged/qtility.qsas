@@ -144,6 +144,7 @@ function qsas_parse_args
 function qsas_check_args
 {
 	# Reform the program name to make sure the ".sas" extension is there.
+	[[ -z $sasprog && ! -z $program ]] && sasprog=$program
 	baseprog=$(basename $sasprog .sas)
 	sasprog=$(dirname $sasprog)/$baseprog.sas
 
@@ -199,7 +200,7 @@ function qsas_submit
 #PBS $resources
 #PBS -j oe
 cd $PWD
-sas -noterminal -cpucount $cpucount -memsize $memsize -sumsize $sumsize -sortsize $sortsize $extras $sasprog" | qsub
+sas -noterminal -cpucount $cpucount -memsize $memsize -sumsize $sumsize -sortsize $sortsize $extras $sasprog" 
 }
 ####################################################################################
 

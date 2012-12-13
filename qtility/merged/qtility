@@ -74,6 +74,11 @@ memmax=122880
 cpudef=1
 memdef=5120
 
+# sundry
+deflogext=log
+# if using different submission program, replace
+qsub=qsub 
+
 ####################################################################################
 function print_help
 {
@@ -85,6 +90,8 @@ Options:
 EOF
 	${OPT}_help opts
 	cat << EOF
+    --program=FILE        Run FILE using $SOFTWARE in a PBS-like system.
+    --logfile=FILE        Name of the log file. If not specified, it will be the default: FILE.${deflogext}.
     --chunks=NUM,
     --cpucount=NUM        Use NUM chunks/CPUs to process the program. Default: ${cpudef}. Max: $cpumax
     --memsize=NUM         Set the memsize as NUM megabytes. Default: $memdef per CPU. Max: $memmax
@@ -97,6 +104,7 @@ EOF
     --mailto=ADDR         Send PBSPro event emails to ADDR, which should be in the form of USER@SERVER. Use
                           the --mailops option to set which event emails should be sent.
     --verbose             Turn on verbose mode. Prints all settings prior to running job.
+    --force               Ignore most warnings that lead to job abortion and proceed anyway. USE WITH CAUTION!
     --debug               Turn on debug. All code will run except that the job will not be placed in the PBS
                           queue. Also, running in debug mode will set the verbose flag as well.
 
@@ -192,6 +200,7 @@ function parse_args
 			;;
 		*)
 			positional=yes
+			[[ -z $1 ]] || program=$1
 			${OPT}_parse_args positional
 			;;
 	esac
@@ -201,6 +210,12 @@ function parse_args
 	while [[ ! -z $1 ]]
 	do
 		case $1 in
+			--program*)
+				program=${1##*=}
+				;;
+                        --logfile*)
+                                logfile=${1##*=}
+                                ;;
 			--chunks*)
 				cpucount=${1##*=}
 				;;
@@ -209,16 +224,6 @@ function parse_args
 				;;
 			--memsize*)
 				rawmemsize=${1##*=}
-				if [[ $rawmemsize -lt $memmin ]]
-				then
-				    echo "Warning: memsize not allowed to be less than 20 (MB). Resetting to 20MB."
-				    rawmemsize=20
-				fi
-				if [[ $rawmemsize -gt $memmax ]]
-				then
-				    echo "Warning: memsize not allowed to be greater than 80 GB. Resetting to 80000MB."
-				    rawmemsize=$memmax
-				fi
 				;;
 			--pbsname*)
 				pbsname=${1##*=}
@@ -232,10 +237,14 @@ function parse_args
 		    --verbose*)
 			    verbose=yes
 				;;
+		    --force*)
+			    force=yes
+				;;
 		    --debug*)
 		        echo "Debug Mode On: PBS Job will NOT be started."
 		        debug=yes
  		        verbose=yes
+			qsub=less
 				;;
 			--quiet*)
 				quiet=yes
@@ -252,7 +261,7 @@ function parse_args
 		esac
 		shift
 	done
-	[[ -z $sasprog && -z $cpucount ]] && print_help
+	[[ -z $program && -z $cpucount ]] && print_help
 	${OPT}_parse_args optional $remaining_args
 
 }
@@ -265,6 +274,7 @@ function check_args
     [[ -z $pbsname ]] && pbsname=${baseprog:0:15}
     [[ -z $mailto ]] && mailto=$USER
     [[ -z $mailops ]] && mailops=n
+    [[ -z $logfile ]] && logfile=${program}.${deflogext}
 
         # Check cpucount, and put it in range: cpumin .le. cpucount .le. cpumax
 	[[ -z $cpucount ]] && cpucount=$cpudef
@@ -275,8 +285,10 @@ function check_args
         fi
         if [[ $cpucount -gt $cpumax ]]
         then
-            echo "Warning: cpucount not allowed to be greater than $cpumax. Resetting to $cpumax."
-            cpucount=$cpumax
+		echo "Warning: cpucount not allowed to be greater than $cpumax. "
+		echo "Reset to $cpumax and resubmit."
+#		cpucount=$cpumax
+		[[ -z $force ]] && exit 2
         fi
 
 	[[ -z $rawmemsize ]] && rawmemsize=$(( ${cpucount}*$memdef ))
@@ -287,8 +299,10 @@ function check_args
 	fi
 	if [[ $rawmemsize -gt $memmax ]]
 	then
-	    echo "Warning: memsize not allowed to be greater than $memmax GB. Resetting to $memmax  MB."
-	    rawmemsize=$memmax
+		echo "Warning: memsize not allowed to be greater than $memmax GB.  "
+		echo "Reset to $memmax  MB and resubmit"
+#	    rawmemsize=$memmax
+		[[ -z $force ]] && exit 2
 	fi
 
 	# Call program-specific argument parser.
@@ -319,5 +333,5 @@ parse_script_call
 parse_args
 check_args
 [[ -z $verbose ]] || ${OPT}_verbose_print
-${OPT}_submit
+${OPT}_submit | $qsub
 
