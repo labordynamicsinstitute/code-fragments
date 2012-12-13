@@ -65,6 +65,15 @@ err=false
 # Temporary variables for debugging.
 verbose=yes
 echo=echo
+
+# parameters - may be overridden later
+cpumin=1
+cpumax=24
+memmin=2048
+memmax=122880
+cpudef=1
+memdef=5120
+
 ####################################################################################
 function print_help
 {
@@ -77,8 +86,8 @@ EOF
 	${OPT}_help opts
 	cat << EOF
     --chunks=NUM,
-    --cpucount=NUM        Use NUM chunks/CPUs to process the SAS program.
-    --memsize=NUM         Set the SAS memsize as NUM megabytes.
+    --cpucount=NUM        Use NUM chunks/CPUs to process the program. Default: ${cpudef}. Max: $cpumax
+    --memsize=NUM         Set the memsize as NUM megabytes. Default: $memdef per CPU. Max: $memmax
     --pbsname=LABEL       Set the name of the job for entering in the PBS queue. The standard is to
                           use the first 15 digits of the program name.
     --mailops=OPS         Set the PBSPro events for which emails should be sent. The --mailto option must be set
@@ -200,15 +209,15 @@ function parse_args
 				;;
 			--memsize*)
 				rawmemsize=${1##*=}
-				if [[ $rawmemsize -lt 20 ]]
+				if [[ $rawmemsize -lt $memmin ]]
 				then
 				    echo "Warning: memsize not allowed to be less than 20 (MB). Resetting to 20MB."
 				    rawmemsize=20
 				fi
-				if [[ $rawmemsize -gt 80000 ]]
+				if [[ $rawmemsize -gt $memmax ]]
 				then
 				    echo "Warning: memsize not allowed to be greater than 80 GB. Resetting to 80000MB."
-				    rawmemsize=80000
+				    rawmemsize=$memmax
 				fi
 				;;
 			--pbsname*)
@@ -253,26 +262,42 @@ function parse_args
 function check_args
 {
 	# Checking general arguments
-	[[ -z $cpucount ]] && cpucount=1
-	[[ -z $rawmemsize ]] && rawmemsize=$(( ${cpucount}*5000 ))
     [[ -z $pbsname ]] && pbsname=${baseprog:0:15}
     [[ -z $mailto ]] && mailto=$USER
     [[ -z $mailops ]] && mailops=n
-	resources="-l ncpus=$cpucount,mem=${memsize}mb"
 
-	# Cpucount needs to be less than 16.
-    if [[ cpucount -gt 16 ]]
-    then
-		echo "The number of CPUs (chunks) cannot be larger than 16."
-		echo "You entered: chunks/cpucount=$cpucount"
-		exit 2
-    fi
+        # Check cpucount, and put it in range: cpumin .le. cpucount .le. cpumax
+	[[ -z $cpucount ]] && cpucount=$cpudef
+        if [[ $cpucount -lt $cpumin ]]
+        then
+            echo "Warning: cpucount not allowed to be less than $cpumin. Resetting to $cpumin."
+            cpucount=$cpumin
+        fi
+        if [[ $cpucount -gt $cpumax ]]
+        then
+            echo "Warning: cpucount not allowed to be greater than $cpumax. Resetting to $cpumax."
+            cpucount=$cpumax
+        fi
 
-	# These variables need special formatting after getting their values.
-    memsize=$rawmemsize"m"
+	[[ -z $rawmemsize ]] && rawmemsize=$(( ${cpucount}*$memdef ))
+	if [[ $rawmemsize -lt $memmin ]]
+	then
+	    echo "Warning: memsize not allowed to be less than $memmin (MB). Resetting to $memmin MB."
+	    rawmemsize=$memmin
+	fi
+	if [[ $rawmemsize -gt $memmax ]]
+	then
+	    echo "Warning: memsize not allowed to be greater than $memmax GB. Resetting to $memmax  MB."
+	    rawmemsize=$memmax
+	fi
 
 	# Call program-specific argument parser.
 	${OPT}_check_args
+
+# generic formatting
+	resources="-l ncpus=$cpucount,mem=${rawmemsize}mb"
+
+
 # while testing only
 	        debug=yes
  	

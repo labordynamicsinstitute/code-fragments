@@ -159,6 +159,8 @@ function qsas_check_args
 	[[ -z $altlog ]] || extras="-altlog ${altlog}"
 
 	# These variables need special formatting after getting their values.
+	# These variables need special formatting after getting their values.
+    memsize=$rawmemsize"m"
     sumsize=$sumsize"m"
     sortsize=$sortsize"m"
 }
