@@ -33,6 +33,6 @@ done
 
 echo " Verify remove-core.sh, then"
 echo " do" 
-echo " (cd $base; tar czvf ${wd}/R-packages-SSG-$version.tgz $libbase)"
+echo " (cd $base; tar cjzvf ${wd}/R-${version}-modules-mkl-cac.tar.bz2 $libbase)"
 
 
