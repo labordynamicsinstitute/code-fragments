@@ -1,0 +1,64 @@
+### R-3.0.2 was configured with the uncommented lines below, Lars Vilhuber/Sida Peng 2013-02-04
+### this is a high-performance build of R that is then subsequently linked with AMD ACML
+### source this file to reproduce the configuration (2a+2), or edit as desired
+### This assumes you are in the root of the R source directory (R-patched/, below)
+
+## ACML libraries:
+## for CentOS 6 (gcc 4.4.6), we used ACML 4.4 acml-4-4-0-gfortran-64bit1.tgz
+## Note: according to http://devgurus.amd.com/thread/160216, ACML should respect
+## OMP_NUM_THREADS, but the test results show little difference by OMP_NUM_THREADS
+## converging to the number that MKL builds show for OMP_NUM_THREADS=32 (number of CPUS)
+
+### To download, unpack, and update R, adjust the following lines (and uncomment)
+wget ftp://ftp.stat.math.ethz.ch/Software/R/R-patched.tar.gz
+tar xzf R-patched.tar.gz
+cd R-patched
+tools/rsync-recommended
+
+### In contrast to the MKL compile, no special optimizations, other than post-compile replacing a library
+### were done!
+
+### Configure the prefix to the desired location
+### Note that there is only a MP version. Lots of libraries are needed, though.
+# This is for the MP version
+PREFIX=/cac/contrib/R-3.0.2-ACML/MP
+ACMLLIB=/ssgprojects/project0005/R-3.0.2-ACML/acml/gfortran64_mp/lib/
+# This is for the NOMP version
+PREFIX=/cac/contrib/R-3.0.2-ACML/NOMP
+ACMLLIB=/ssgprojects/project0005/R-3.0.2-ACML/acml/gfortran64/lib/
+
+##(1) GNU compilers, standard stuff
+#./configure --prefix=$PREFIX
+
+##(2) GNU compilers
+./configure --prefix=$PREFIX FFLAGS="-march=core2 -O3" CFLAGS="-march=core2 -O3 -m64" CXXFLAGS="-march=core2 -O3 -m64" FCFLAGS="-march=core2 -O3 -m64" LDFLAGS="-Bdirect,--hash-style=both,-Wl,-O1"
+
+### Now to compile, use the following lines
+echo make
+echo make check
+echo make install
+echo cp $ACMLLIB/* $PREFIX/lib64/R/lib/
+echo cp $PREFIX/lib64/R/lib/libacml_mp.so $PREFIX/lib64/R/lib/libRblas.so
+
+###------------------------------------------------------------------------------------------------
+## Results
+echo " The default result should be:
+R is now configured for x86_64-unknown-linux-gnu
+
+  Source directory:          .
+  Installation directory:    /cac/contrib/R-3.0.2/ACML/MP
+
+  C compiler:                gcc -std=gnu99  -march=core2 -O3 -m64
+  Fortran 77 compiler:       gfortran  -march=core2 -O3
+
+  C++ compiler:              g++  -march=core2 -O3 -m64
+  Fortran 90/95 compiler:    gfortran -march=core2 -O3 -m64
+  Obj-C compiler:	      
+
+  Interfaces supported:      X11, tcltk
+  External libraries:        readline
+  Additional capabilities:   PNG, JPEG, TIFF, NLS, cairo
+  Options enabled:           shared BLAS, R profiling
+
+  Recommended packages:      yes
+"
