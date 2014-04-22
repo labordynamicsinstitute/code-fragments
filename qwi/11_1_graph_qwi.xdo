@@ -5,7 +5,7 @@ global texloc="../../text/OECD";
 global hsize 1600;
 global vsize 1200;
 
-use "displacement_pu_qwi_all.dta", clear;
+use "qwi_compare_all.dta", clear;
 /* generate classes */
 /*
 gen class=.;
