@@ -18,7 +18,7 @@ options ls=150;
 %mend;
 /*Creating a data extract with the variables of interest*/
 data data_extract_sample;
-	set INPUTS.qwi_extract 
+	set INPUTS.qwi_extract_sample
 	(keep = state year quarter sex naicssec county agegroup a b e s m jc jd f);
 	/* we want only the margins */
 	if 
@@ -100,7 +100,7 @@ run;
 
 
 /* merge data */
-data OUTPUTS.displacement_pu_qwi_all;
+data OUTPUTS.qwi_compare_all;
 	merge data_summary_sample (in=_a)
 	     data_extract_national(in=_b);
 	by  year quarter naicssec agegroup sex;
@@ -112,17 +112,17 @@ proc freq;
 title "After merge";
 table _merge naicssec agegroup sex year*quarter;
 run;
-proc print data=OUTPUTS.displacement_pu_qwi_all(where=(_merge=1));
+proc print data=OUTPUTS.qwi_compare_all(where=(_merge=1));
 var naicssec agegroup sex year quarter;
 run;
 
 
-proc print data=OUTPUTS.displacement_pu_qwi_all(where=(naicssec='00'));
+proc print data=OUTPUTS.qwi_compare_all(where=(naicssec='00'));
 run;
 
 
 /* naics table */
-proc print data=OUTPUTS.displacement_pu_qwi_all(where=(naicssec = '00' and quarter=2));
+proc print data=OUTPUTS.qwi_compare_all(where=(naicssec = '00' and quarter=2));
 id  agegroup sex year quarter;
 var ar qwi_ar st_qwi_ar sr qwi_sr st_qwi_sr jcr qwi_jcr st_qwi_jcr jdr qwi_jdr st_qwi_jdr;
 run;
