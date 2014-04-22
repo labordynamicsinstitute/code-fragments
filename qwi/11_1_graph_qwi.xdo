@@ -1,0 +1,72 @@
+/* $Id$ */
+/* $URL$ */
+#delimit;
+global texloc="../../text/OECD";
+global hsize 1600;
+global vsize 1200;
+
+use "displacement_pu_qwi_all.dta", clear;
+/* generate classes */
+/*
+gen class=.;
+replace class=0 if naicssec=="00" & agegroup =="A00" & sex == "0";
+replace class=1 if naicssec=="00" & agegroup =="A00" & sex ~= "0";
+replace class=2 if naicssec=="00" & agegroup ~="A00" & sex == "0";
+replace class=3 if naicssec~="00" & agegroup =="A00" & sex == "0";
+*/
+/*
+drop 	if naicssec =="11";
+drop 	if naicssec =="21");
+drop	if naicssec =="22";
+drop	 if naicssec =="48-49") then naicsmod="48-49;
+drop	 if naicssec ==22";
+	if naicssec == "55";
+drop	 if naicssec =="56") then naicsmod="55-56";
+*/
+drop	if naicssec =="51";
+drop	 if naicssec =="53";
+drop	 if naicssec =="54";
+drop	 if naicssec =="61";
+drop	 if naicssec =="62";
+drop	 if naicssec =="71";
+drop	 if naicssec =="72";
+
+
+/*
+tab class;
+label define class
+	0 "Aggregate"
+	1 "Gender"
+	2 "Age groups"
+	3 "NAICS Sectors"
+;
+label values class class;
+*/
+
+capture program drop graphqwi;
+program define graphqwi;
+syntax namelist(min=1);
+tokenize "`namelist'";
+local suffix "`1'";
+
+/*
+capture drop qwi_`suffix'_*;
+gen qwi_`suffix'_upper=qwi_`suffix'+2*st_qwi_`suffix';
+gen qwi_`suffix'_lower=qwi_`suffix'-2*st_qwi_`suffix';
+*/
+twoway 
+	(rcap qwi_`suffix'_upper qwi_`suffix'_lower `suffix', sort lcolor(gs12) lpattern(solid) msize(small)) 
+	(scatter qwi_`suffix' `suffix', sort mcolor(blue) msymbol(point) msize(small)) 
+	(line `suffix' `suffix', sort lcolor(gs9))
+	,by(class) legend(order(2 "National (with error bands)" ) 
+			) ytitle("National rate") xtitle("Rate in sample states");
+graph save qwi_sample_`suffix', replace;
+graph export $texloc/qwi_sample_`suffix'.png, replace width($hsize);
+end;
+
+graphqwi sr;
+graphqwi ar;
+graphqwi jcr;
+graphqwi jdr;
+
+
