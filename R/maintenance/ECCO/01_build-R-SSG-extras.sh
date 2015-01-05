@@ -1,7 +1,7 @@
 #!/bin/bash
 pkglist=pkglist.bioconductor.txt
+#. config.sh
 outfile=build-R-SSG-extras.R
-. config.sh
 [[ -d $lib ]] || mkdir -p $lib
 
 printf "%20s" "pkgs <- c(" > $outfile

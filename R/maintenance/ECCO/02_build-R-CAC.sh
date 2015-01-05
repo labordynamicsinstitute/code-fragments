@@ -1,7 +1,8 @@
 #!/bin/bash
 pkglist=pkglist.CAC.txt
 outfile=build-R-CAC.R
-. config.sh
+#. config.sh
+# be sure to source 00_config.sh first!
 
 
 printf "%20s" "pkgs <- c(" > $outfile

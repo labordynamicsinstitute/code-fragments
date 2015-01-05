@@ -90,3 +90,7 @@ rm -rf /scratch/lv39/library/nnet
 rm -rf /scratch/lv39/library/rpart
 rm -rf /scratch/lv39/library/spatial
 rm -rf /scratch/lv39/library/survival
+rm -rf /scratch/lv39/library/cluster
+rm -rf /scratch/lv39/library/lattice
+rm -rf /scratch/lv39/library/MKL/NOMP/cluster
+rm -rf /scratch/lv39/library/MKL/NOMP/lattice

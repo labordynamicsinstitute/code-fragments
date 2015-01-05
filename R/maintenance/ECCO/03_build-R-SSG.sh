@@ -2,19 +2,21 @@
 pkglist=pkglist.SSG.txt
 outfile=build-R-SSG.R
 wd=$(pwd)
-. config.sh
+#. config.sh
 
 [[ -d $lib ]] || mkdir -p $lib
 
-
-printf "%20s" "pkgs <- c(" > $outfile
-cat $pkglist |\
-  awk -v ORS=, ' { print "\""$1"\"" } ' >> $outfile
-# work around the last part of the array: need one more element
-head -1 $pkglist | awk -v ORS= ' { print "\""$1"\"" } ' >> $outfile
-echo ")" >> $outfile
-
 count=$(cat $pkglist| wc -l)
+echo "# $(date) " > $outfile
+if [[ ! $count = 0 ]]
+then
+   printf "%20s" "pkgs <- c(" >> $outfile
+   cat $pkglist |\
+    awk -v ORS=, ' { print "\""$1"\"" } ' >> $outfile
+   # work around the last part of the array: need one more element
+   head -1 $pkglist | awk -v ORS= ' { print "\""$1"\"" } ' >> $outfile
+   echo ")" >> $outfile
+fi
 
 echo "install.packages(pkgs, contriburl='$CRANURL', lib='$lib')">> $outfile 
 echo "warnings()" >> $outfile
@@ -23,8 +25,8 @@ echo "warnings()" >> $outfile
 #echo "library(inline)" >> $outfile
 #echo "library(Rcpp)" >> $outfile
 #echo "library(RcppEigen)" >> $outfile
-#echo "options(repos = c(getOption('repos'), rstan = 'http://wiki.stan.googlecode.com/git/R'))
-#install.packages('rstan', type = 'source') " >> $outfile
+echo "options(repos = c(getOption('repos'), rstan = 'http://wiki.stan.googlecode.com/git/R'))
+install.packages('rstan', type = 'source') " >> $outfile
 
 # now we run it
 echo "We will now run the progrom to create $count CRAN packages"

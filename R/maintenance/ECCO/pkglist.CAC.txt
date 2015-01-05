@@ -28,7 +28,6 @@ DAAG
 data.table
 DBI
 degreenet
-delt
 denpro
 digest
 doBy
@@ -62,7 +61,6 @@ ggm
 gplots
 gsubfn
 gtools
-hdf5
 hexbin
 Hmisc
 HSAUR
@@ -142,7 +140,6 @@ rpanel
 RSQLite
 RUnit
 rv
-sampleSelection
 sampling
 samr
 sandwich
@@ -168,7 +165,6 @@ strucchange
 SuppDists
 survey
 synchronicity
-systemfit
 TeachingDemos
 timeDate
 timeSeries
