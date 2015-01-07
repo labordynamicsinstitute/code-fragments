@@ -1,0 +1,17 @@
+#!/bin/bash
+#PBS -N test-igraph
+#PBS -l ncpus=8,mem=68192mb
+#PBS -q premium
+#PBS -l walltime=02:00:00
+#PBS -j oe
+#PBS -m ae
+source /etc/profile.d/modules.sh
+cd /home/fs01/lv39/Workspace/git/code-fragments/R/maintenance/packages
+umask 0007
+ulimit -m 8388608
+module load R/MKL
+R --vanilla < test-igraph.R > test-igraph.Rout 2> test-igraph.log
+
+exitcode=$?
+[[ $exitcode = 1 ]] && exit 0 || exit $exitcode
+
