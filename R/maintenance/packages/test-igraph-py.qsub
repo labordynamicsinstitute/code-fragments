@@ -9,7 +9,7 @@ source /etc/profile.d/modules.sh
 cd /home/fs01/lv39/Workspace/git/code-fragments/R/maintenance/packages
 umask 0007
 ulimit -m 8388608
-module load python/anaconda/mkl2.7
+module load python/anaconda/2.7
 python test-igraph.py > test-igraph.pyout 2>&1
 
 exitcode=$?

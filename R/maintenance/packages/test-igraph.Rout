@@ -1,0 +1,29 @@
+
+R version 3.0.1 (2013-05-16) -- "Good Sport"
+Copyright (C) 2013 The R Foundation for Statistical Computing
+Platform: x86_64-redhat-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library(igraph)
+> g <- erdos.renyi.game(100000,0.0001,type="gnp")
+> summary(g)
+IGRAPH U--- 100000 499608 -- Erdos renyi (gnp) graph
+attr: name (g/c), type (g/c), loops (g/x), p (g/n)
+> starttime=Sys.time()
+> diameter(g)
+[1] 9
+> Sys.time()-starttime
+Time difference of 32.04389 mins
+> 
+> 
