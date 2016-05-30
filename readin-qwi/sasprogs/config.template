@@ -1,0 +1,5 @@
+/* $Id: config.template 202 2010-10-06 01:53:25Z vilhu001 $ */
+
+options compress=yes;
+%put =========== running on %sysget(HOSTNAME) ============;
+

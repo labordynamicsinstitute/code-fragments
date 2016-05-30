@@ -6,7 +6,7 @@ exitfull=0
 
 while [[ $exitfull = 0 ]]
 do
-jobid=`qstat | grep sdsx | awk '{ print "FALSE\n"$0 } '| sed 's/  */\n/g' | grep -v "^$"| zenity --title "Qstat" --text "<b>Choose a job to interrupt.</b>\nYou can also manually do this from the command line \n  with the command '<tt>qdel NNNN</tt>'.\nYou can only interrupt <b>your own jobs</b>.\nHit <b>CANCEL</b> to exit." --list  --radiolist --separator=' ' --column="" --column="Job ID" --column="Name" --column="User" --column="Time Use" --column="Status" --column="Queue" --window-icon="info" --width="600"`
+jobid=`qstat | grep -E "^[0-9]" | awk '{ print "FALSE\n"$0 } '| sed 's/  */\n/g' | grep -v "^$"| zenity --title "Qstat" --text "<b>Choose a job to interrupt.</b>\nYou can also manually do this from the command line \n  with the command '<tt>qdel NNNN</tt>'.\nYou can only interrupt <b>your own jobs</b>.\nHit <b>CANCEL</b> to exit." --list  --radiolist --separator=' ' --column="" --column="Job ID" --column="Name" --column="User" --column="Time Use" --column="Status" --column="Queue" --window-icon="info" --width="600"`
 exitfull=$?
 #echo "x${jobid}x"
 if [[ ! -z $jobid ]]
