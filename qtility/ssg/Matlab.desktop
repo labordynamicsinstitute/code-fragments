@@ -1,0 +1,11 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Matlab
+Exec=/usr/local/bin/imatlab
+Type=Application
+Icon=/usr/share/icons/vrdc/48x48/Action_MATLAB_24.png
+GenericName=Matlab
+Terminal=0
+X-KDE-StartupNotify=true
+Categories=Application;Statistics;VirtualRDC;SSG;
+

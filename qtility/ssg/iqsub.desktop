@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Interactive Session
+Exec=/usr/local/bin/iqsub
+Type=Application
+Icon=/usr/share/icons/vrdc/48x48/cloud.png
+GenericName=Interactive Session
+Terminal=1
+X-KDE-StartupNotify=true
+Categories=Application;Statistics;VirtualRDC;SSG;

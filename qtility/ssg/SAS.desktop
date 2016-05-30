@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=SAS 
+Exec=/usr/local/bin/isas
+Type=Application
+Icon=/usr/share/icons/vrdc/48x48/sasicon94.png
+GenericName=SAS Interactive Environment
+Terminal=0
+X-KDE-StartupNotify=true
+Categories=Application;Statistics;VirtualRDC;SSG;

@@ -1,0 +1,11 @@
+
+[Desktop Entry]
+Name=GNU Octave
+Comment=Scientific Computing using GNU Octave
+Exec=/usr/local/bin/ioctave
+Icon=/usr/share/icons/vrdc/svg/octave-logo.svg
+Terminal=true
+Type=Application
+Categories=Math;Science;Physics;Engineering;NumericalAnalysis;DataVisualization;Statistics;
+StartupNotify=false
+X-Desktop-File-Install-Version=0.15

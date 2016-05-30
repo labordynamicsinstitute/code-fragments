@@ -1,0 +1,9 @@
+[Desktop Entry]
+Encoding=UTF-8
+Type=Application
+Terminal=0
+Exec=iqstat
+Name=QSTAT
+Comment=See statistics on running jobs and delete individual jobs
+Icon=openofficeorg-impress
+Categories=Application;Statistics;VirtualRDC;SSG;

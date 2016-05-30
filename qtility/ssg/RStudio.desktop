@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=RStudio
+Exec=/usr/local/bin/iRstudio
+Type=Application
+Icon=/usr/share/icons/vrdc/48x48/rstudio.png
+GenericName=RStudio
+Terminal=0
+X-KDE-StartupNotify=true
+Categories=Application;Statistics;VirtualRDC;SSG;

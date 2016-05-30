@@ -1,0 +1,9 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Stata/MP
+Exec=iStata-mp
+Type=Application
+Icon=/usr/share/icons/vrdc/48x48/stata13.png
+Terminal=0
+X-KDE-StartupNotify=true
+Categories=Application;Statistics;VirtualRDC;SSG;
